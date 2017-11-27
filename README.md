@@ -1,4 +1,7 @@
-# RGeo::Proj4
+# `rgeo-proj4`
+
+[![Gem Version](https://badge.fury.io/rb/rgeo-proj4.svg)](http://badge.fury.io/rb/rgeo-proj4)
+[![Build Status](https://travis-ci.org/rgeo/rgeo-proj4.svg?branch=master)](https://travis-ci.org/rgeo/rgeo-proj4)
 
 This project contains Proj4 extensions to the [rgeo gem](https://github.com/rgeo/rgeo).
 
