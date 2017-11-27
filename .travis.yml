@@ -1,0 +1,13 @@
+dist: trusty
+sudo: false
+addons:
+  apt:
+    packages:
+    - libproj-dev
+language: ruby
+rvm:
+  - 2.1
+  - 2.2.8
+  - 2.3.5
+  - 2.4.2
+  - jruby-9.1.9.0

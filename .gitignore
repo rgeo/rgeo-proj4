@@ -1,0 +1,18 @@
+doc/
+pkg/
+tmp/
+.rbx/
+.#*
+*.dSYM
+*.class
+*.jar
+*.bundle
+*.o
+*.rbc
+Makefile
+mkmf.log
+Gemfile.lock
+
+# Generated files
+/ext/proj4_c_impl/proj4_c_impl_*.so
+/lib/rgeo/coord_sys/proj4_c_impl.so
