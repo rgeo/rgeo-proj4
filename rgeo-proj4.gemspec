@@ -15,7 +15,6 @@ Gem::Specification.new do |spec|
 
   spec.files         = Dir["lib/**/*.rb", "ext/**/*.{rb,c,h}", "LICENSE.txt"]
   spec.extensions    = ["ext/proj4_c_impl/extconf.rb"]
-  # spec.require_paths = ["lib", "ext"]
 
   spec.add_dependency "rgeo", "~> 1.0.0.rc1"
 
