@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 require "common/multi_line_string_tests"
 

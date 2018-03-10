@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test/unit"
 require "rgeo/proj4"
 require "common/factory_tests"

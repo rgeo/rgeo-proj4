@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 class TestFactory < Test::Unit::TestCase # :nodoc:
