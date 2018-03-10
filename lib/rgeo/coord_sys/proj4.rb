@@ -233,27 +233,29 @@ module RGeo
         def transform(from_proj_, from_geometry_, to_proj_, to_factory_)
           case from_geometry_
           when Feature::Point
-            _transform_point(from_proj_, from_geometry_, to_proj_, to_factory_)
+            transform_point(from_proj_, from_geometry_, to_proj_, to_factory_)
           when Feature::Line
-            to_factory_.line(from_geometry_.points.map { |p_| _transform_point(from_proj_, p_, to_proj_, to_factory_) })
+            to_factory_.line(from_geometry_.points.map { |p_| transform_point(from_proj_, p_, to_proj_, to_factory_) })
           when Feature::LinearRing
-            _transform_linear_ring(from_proj_, from_geometry_, to_proj_, to_factory_)
+            transform_linear_ring(from_proj_, from_geometry_, to_proj_, to_factory_)
           when Feature::LineString
-            to_factory_.line_string(from_geometry_.points.map { |p_| _transform_point(from_proj_, p_, to_proj_, to_factory_) })
+            to_factory_.line_string(from_geometry_.points.map { |p_| transform_point(from_proj_, p_, to_proj_, to_factory_) })
           when Feature::Polygon
-            _transform_polygon(from_proj_, from_geometry_, to_proj_, to_factory_)
+            transform_polygon(from_proj_, from_geometry_, to_proj_, to_factory_)
           when Feature::MultiPoint
-            to_factory_.multi_point(from_geometry_.map { |p_| _transform_point(from_proj_, p_, to_proj_, to_factory_) })
+            to_factory_.multi_point(from_geometry_.map { |p_| transform_point(from_proj_, p_, to_proj_, to_factory_) })
           when Feature::MultiLineString
             to_factory_.multi_line_string(from_geometry_.map { |g_| transform(from_proj_, g_, to_proj_, to_factory_) })
           when Feature::MultiPolygon
-            to_factory_.multi_polygon(from_geometry_.map { |p_| _transform_polygon(from_proj_, p_, to_proj_, to_factory_) })
+            to_factory_.multi_polygon(from_geometry_.map { |p_| transform_polygon(from_proj_, p_, to_proj_, to_factory_) })
           when Feature::GeometryCollection
             to_factory_.collection(from_geometry_.map { |g_| transform(from_proj_, g_, to_proj_, to_factory_) })
           end
         end
 
-        def _transform_point(from_proj_, from_point_, to_proj_, to_factory_) # :nodoc:
+        private
+
+        def transform_point(from_proj_, from_point_, to_proj_, to_factory_)
           from_factory_ = from_point_.factory
           from_has_z_ = from_factory_.property(:has_z_coordinate)
           from_has_m_ = from_factory_.property(:has_m_coordinate)
@@ -278,13 +280,13 @@ module RGeo
           end
         end
 
-        def _transform_linear_ring(from_proj_, from_ring_, to_proj_, to_factory_) # :nodoc:
-          to_factory_.linear_ring(from_ring_.points[0..-2].map { |p_| _transform_point(from_proj_, p_, to_proj_, to_factory_) })
+        def transform_linear_ring(from_proj_, from_ring_, to_proj_, to_factory_)
+          to_factory_.linear_ring(from_ring_.points[0..-2].map { |p_| transform_point(from_proj_, p_, to_proj_, to_factory_) })
         end
 
-        def _transform_polygon(from_proj_, from_polygon_, to_proj_, to_factory_) # :nodoc:
-          ext_ = _transform_linear_ring(from_proj_, from_polygon_.exterior_ring, to_proj_, to_factory_)
-          int_ = from_polygon_.interior_rings.map { |r_| _transform_linear_ring(from_proj_, r_, to_proj_, to_factory_) }
+        def transform_polygon(from_proj_, from_polygon_, to_proj_, to_factory_)
+          ext_ = transform_linear_ring(from_proj_, from_polygon_.exterior_ring, to_proj_, to_factory_)
+          int_ = from_polygon_.interior_rings.map { |r_| transform_linear_ring(from_proj_, r_, to_proj_, to_factory_) }
           to_factory_.polygon(ext_, int_)
         end
       end
