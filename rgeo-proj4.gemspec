@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.description   = "Proj4 extension for rgeo."
   spec.homepage      = "https://github.com/rgeo/rgeo-proj4"
   spec.license       = "MIT"
-  spec.required_ruby_version = ">= 2.2.2"
+  spec.required_ruby_version = ">= 2.3.0"
 
   spec.files         = Dir["lib/**/*.rb", "ext/**/*.{rb,c,h}", "LICENSE.txt"]
   spec.extensions    = ["ext/proj4_c_impl/extconf.rb"]
