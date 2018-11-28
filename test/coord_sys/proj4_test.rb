@@ -114,15 +114,15 @@ class TestProj4 < Test::Unit::TestCase # :nodoc:
   private
 
   def project_merc(x, y)
-    [x * 6_378_137.0, ::Math.log(::Math.tan(::Math::PI / 4.0 + y / 2.0)) * 6_378_137.0]
+    [x * 6_378_137.0, Math.log(Math.tan(Math::PI / 4.0 + y / 2.0)) * 6_378_137.0]
   end
 
   def unproject_merc(x, y)
-    [x / 6_378_137.0, (2.0 * ::Math.atan(::Math.exp(y / 6_378_137.0)) - ::Math::PI / 2.0)]
+    [x / 6_378_137.0, (2.0 * Math.atan(Math.exp(y / 6_378_137.0)) - Math::PI / 2.0)]
   end
 
   def assert_close_enough(a, b)
-    delta = ::Math.sqrt(a * a + b * b) * 0.00000001
+    delta = Math.sqrt(a * a + b * b) * 0.00000001
     delta = 0.000000000001 if delta < 0.000000000001
     assert_in_delta(a, b, delta)
   end
