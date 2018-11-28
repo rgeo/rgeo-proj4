@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # -----------------------------------------------------------------------------
 #
 # SRS database interface
@@ -62,7 +64,7 @@ module RGeo
             when :read_all
               @populate_state = 1
             when :preload
-              _search_file(nil)
+              search_file(nil)
               @populate_state = 2
             else
               @populate_state = 0
@@ -80,11 +82,11 @@ module RGeo
           return @cache[ident_] if @cache && @cache.include?(ident_)
           result_ = nil
           if @populate_state == 0
-            data_ = _search_file(ident_)
+            data_ = search_file(ident_)
             result_ = Entry.new(ident_, authority: @authority, authority_code: @authority ? ident_ : nil, name: data_[1], proj4: data_[2]) if data_
             @cache[ident_] = result_ if @cache
           elsif @populate_state == 1
-            _search_file(nil)
+            search_file(nil)
             result_ = @cache[ident_]
             @populate_state = 2
           end
@@ -98,7 +100,9 @@ module RGeo
           @populate_state = 1 if @populate_state == 2
         end
 
-        def _search_file(ident_) # :nodoc:
+        private
+
+        def search_file(ident_)
           ::File.open(@path) do |file_|
             cur_name_ = nil
             cur_ident_ = nil

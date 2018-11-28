@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 class TestProj4SRSData < Test::Unit::TestCase # :nodoc:
