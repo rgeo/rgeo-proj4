@@ -46,4 +46,4 @@ end
 
 task test: :compile
 
-task default: [:clean, :test]
+task default: %i[clean test]
