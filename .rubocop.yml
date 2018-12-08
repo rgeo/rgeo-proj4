@@ -12,6 +12,9 @@ Layout/EmptyLineAfterGuardClause:
 Layout/MultilineOperationIndentation:
   Enabled: false
 
+Metrics/BlockLength:
+  Enabled: false
+
 Metrics/ClassLength:
   Enabled: false
 
@@ -27,8 +30,15 @@ Metrics/ModuleLength:
 Metrics/PerceivedComplexity:
   Enabled: false
 
+Naming/UncommunicativeMethodParamName:
+  Enabled: false
+
 Style/CaseEquality:
   Enabled: false
+
+Style/GlobalVars:
+  Exclude:
+    - 'ext/proj4_c_impl/extconf.rb'
 
 Style/NumericPredicate:
   Enabled: false
