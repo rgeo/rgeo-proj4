@@ -44,7 +44,7 @@ module RGeo
       def eql?(rhs_)
         rhs_.class == self.class && rhs_.canonical_hash == canonical_hash && rhs_._radians? == _radians?
       end
-      alias_method :==, :eql?
+      alias == eql?
 
       # Marshal support
 
