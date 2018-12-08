@@ -78,9 +78,7 @@ module RGeo
       def canonical_str
         unless defined?(@canonical_str)
           @canonical_str = _canonical_str
-          if @canonical_str.respond_to?(:force_encoding)
-            @canonical_str.force_encoding("US-ASCII")
-          end
+          @canonical_str.force_encoding("US-ASCII") if @canonical_str.respond_to?(:force_encoding)
         end
         @canonical_str
       end
@@ -174,9 +172,7 @@ module RGeo
             if defn_.is_a?(::Hash)
               defn_ = defn_.map { |k_, v_| v_ ? "+#{k_}=#{v_}" : "+#{k_}" }.join(" ")
             end
-            unless defn_ =~ /^\s*\+/
-              defn_ = defn_.sub(/^(\s*)/, '\1+').gsub(/(\s+)([^+\s])/, '\1+\2')
-            end
+            defn_ = defn_.sub(/^(\s*)/, '\1+').gsub(/(\s+)([^+\s])/, '\1+\2') unless defn_ =~ /^\s*\+/
             result_ = _create(defn_, opts_[:radians])
             result_ = nil unless result_._valid?
           end
@@ -202,9 +198,7 @@ module RGeo
 
         def new(defn_, opts_ = {})
           result_ = create(defn_, opts_)
-          unless result_
-            raise Error::UnsupportedOperation, "Proj4 not supported in this installation"
-          end
+          raise Error::UnsupportedOperation, "Proj4 not supported in this installation" unless result_
           result_
         end
 
