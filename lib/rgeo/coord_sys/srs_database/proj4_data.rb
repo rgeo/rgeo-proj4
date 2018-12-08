@@ -109,7 +109,7 @@ module RGeo
             cur_text_ = nil
             file_.each do |line_|
               line_.strip!
-              if (comment_delim_ = line_.index('#'))
+              if (comment_delim_ = line_.index("#"))
                 cur_name_ = line_[comment_delim_ + 1..-1].strip
                 line_ = line_[0..comment_delim_ - 1].strip
               end
