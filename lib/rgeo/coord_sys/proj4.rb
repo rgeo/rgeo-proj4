@@ -270,16 +270,15 @@ module RGeo
             y_ *= ImplHelper::Math::RADIANS_PER_DEGREE
           end
           coords_ = _transform_coords(from_proj_, to_proj_, x_, y_, from_has_z_ ? from_point_.z : nil)
-          if coords_
-            if !to_proj_._radians? && to_proj_._geographic?
-              coords_[0] *= ImplHelper::Math::DEGREES_PER_RADIAN
-              coords_[1] *= ImplHelper::Math::DEGREES_PER_RADIAN
-            end
-            extras_ = []
-            extras_ << coords_[2].to_f if to_has_z_
-            extras_ << from_has_m_ ? from_point_.m : 0.0 if to_has_m_
-            to_factory_.point(coords_[0], coords_[1], *extras_)
+          return unless coords_
+          if !to_proj_._radians? && to_proj_._geographic?
+            coords_[0] *= ImplHelper::Math::DEGREES_PER_RADIAN
+            coords_[1] *= ImplHelper::Math::DEGREES_PER_RADIAN
           end
+          extras_ = []
+          extras_ << coords_[2].to_f if to_has_z_
+          extras_ << from_has_m_ ? from_point_.m : 0.0 if to_has_m_
+          to_factory_.point(coords_[0], coords_[1], *extras_)
         end
 
         def transform_linear_ring(from_proj_, from_ring_, to_proj_, to_factory_)
