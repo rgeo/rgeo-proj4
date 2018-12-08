@@ -79,7 +79,7 @@ module RGeo
 
         def get(ident_)
           ident_ = ident_.to_s
-          return @cache[ident_] if @cache && @cache.include?(ident_)
+          return @cache[ident_] if @cache&.include?(ident_)
           result_ = nil
           if @populate_state == 0
             data_ = search_file(ident_)
@@ -96,7 +96,7 @@ module RGeo
         # Clear the cache if one exists.
 
         def clear_cache
-          @cache.clear if @cache
+          @cache&.clear
           @populate_state = 1 if @populate_state == 2
         end
 
