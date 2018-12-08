@@ -271,7 +271,9 @@ module RGeo
           end
           extras_ = []
           extras_ << coords_[2].to_f if to_has_z_
-          extras_ << from_has_m_ ? from_point_.m : 0.0 if to_has_m_
+          if to_has_m_
+            extras_ << from_has_m_ ? from_point_.m : 0.0
+          end
           to_factory_.point(coords_[0], coords_[1], *extras_)
         end
 
