@@ -3,7 +3,7 @@
 require "test_helper"
 require "common/geometry_collection_tests"
 
-class TestGeometryCollection < Test::Unit::TestCase # :nodoc:
+class TestGeometryCollection < Minitest::Test # :nodoc:
   include RGeo::Tests::Common::GeometryCollectionTests
 
   def create_factory

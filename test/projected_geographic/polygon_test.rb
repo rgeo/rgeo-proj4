@@ -3,7 +3,7 @@
 require "test_helper"
 require "common/polygon_tests"
 
-class TestPolygon < Test::Unit::TestCase # :nodoc:
+class TestPolygon < Minitest::Test # :nodoc:
   include RGeo::Tests::Common::PolygonTests
 
   def setup

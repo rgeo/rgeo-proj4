@@ -3,7 +3,7 @@
 require "test_helper"
 require "common/line_string_tests"
 
-class TestLineString < Test::Unit::TestCase # :nodoc:
+class TestLineString < Minitest::Test # :nodoc:
   include RGeo::Tests::Common::LineStringTests
 
   def setup

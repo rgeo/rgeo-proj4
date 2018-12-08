@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "test/unit"
+require "minitest/autorun"
 require "rgeo/proj4"
 require "common/factory_tests"
 require "psych"

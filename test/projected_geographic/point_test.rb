@@ -3,7 +3,7 @@
 require "test_helper"
 require "common/point_tests"
 
-class TestPoint < Test::Unit::TestCase # :nodoc:
+class TestPoint < Minitest::Test # :nodoc:
   include RGeo::Tests::Common::PointTests
 
   def setup
