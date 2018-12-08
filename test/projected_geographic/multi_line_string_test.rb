@@ -3,7 +3,7 @@
 require "test_helper"
 require "common/multi_line_string_tests"
 
-class TestMultiLineString < Test::Unit::TestCase # :nodoc:
+class TestMultiLineString < Minitest::Test # :nodoc:
   include RGeo::Tests::Common::MultiLineStringTests
 
   def create_factory

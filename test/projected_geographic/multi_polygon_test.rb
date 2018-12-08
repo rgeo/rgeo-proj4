@@ -3,7 +3,7 @@
 require "test_helper"
 require "common/multi_polygon_tests"
 
-class TestMultiPolygon < Test::Unit::TestCase # :nodoc:
+class TestMultiPolygon < Minitest::Test # :nodoc:
   include RGeo::Tests::Common::MultiPolygonTests
 
   def create_factories

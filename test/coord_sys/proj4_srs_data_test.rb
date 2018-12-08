@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class TestProj4SRSData < Test::Unit::TestCase # :nodoc:
+class TestProj4SRSData < Minitest::Test # :nodoc:
   def test_epsg_4326
     db_ = RGeo::CoordSys::SRSDatabase::Proj4Data.new("epsg")
     entry_ = db_.get(4326)

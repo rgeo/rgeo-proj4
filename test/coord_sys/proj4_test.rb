@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class TestProj4 < Test::Unit::TestCase # :nodoc:
+class TestProj4 < Minitest::Test # :nodoc:
   def test_proj4_version
     assert_kind_of Integer, RGeo::CoordSys::Proj4.version
     # assert_match(/^\d+\.\d+(\.\d+)?$/, RGeo::CoordSys::Proj4.version)
