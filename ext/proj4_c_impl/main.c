@@ -1,9 +1,9 @@
 /*
   Main initializer for Proj4 wrapper
 */
-
 #ifdef HAVE_PROJ_API_H
 #ifdef HAVE_PJ_INIT_PLUS
+#define ACCEPT_USE_OF_DEPRECATED_PROJ_API_H
 #define RGEO_PROJ4_SUPPORTED
 #endif
 #endif
