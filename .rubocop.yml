@@ -1,9 +1,9 @@
 inherit_from: .rubocop_todo.yml
 
 AllCops:
-  TargetRubyVersion: 2.3
+  TargetRubyVersion: 2.4
 
-Layout/AlignParameters:
+Layout/ParameterAlignment:
   Enabled: false
 
 Layout/EmptyLineAfterGuardClause:
@@ -30,7 +30,7 @@ Metrics/ModuleLength:
 Metrics/PerceivedComplexity:
   Enabled: false
 
-Naming/UncommunicativeMethodParamName:
+Naming/MethodParameterName:
   Enabled: false
 
 Style/CaseEquality:
@@ -38,7 +38,7 @@ Style/CaseEquality:
 
 Style/GlobalVars:
   Exclude:
-    - 'ext/proj4_c_impl/extconf.rb'
+    - "ext/proj4_c_impl/extconf.rb"
 
 Style/NumericPredicate:
   Enabled: false
