@@ -14,5 +14,15 @@ matrix:
   include:
     - dist: focal
       rvm: 2.7
+    - dist: bionic
+      rvm: 2.7
+    - os: osx
+      rvm: 2.7
+      addons:
+        homebrew:
+          packages:
+            - proj
   allow_failures:
     - dist: focal
+    - dist: bionic
+    - os: osx

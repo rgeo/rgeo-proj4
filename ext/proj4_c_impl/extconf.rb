@@ -45,9 +45,10 @@ else
 
   found_proj_ = false
   header_dirs_, lib_dirs_ = dir_config("proj", header_dirs_, lib_dirs_)
-  if have_header("proj_api.h")
+  dflag = "-DACCEPT_USE_OF_DEPRECATED_PROJ_API_H"
+  if have_header("proj_api.h", nil, dflag)
     $libs << " -lproj"
-    if have_func("pj_init_plus", "proj_api.h")
+    if have_func("pj_init_plus", "proj_api.h", dflag)
       found_proj_ = true
     else
       $libs.gsub!(" -lproj", "")
