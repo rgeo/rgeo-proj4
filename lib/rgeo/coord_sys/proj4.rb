@@ -8,6 +8,292 @@
 
 module RGeo
   module CoordSys
+    module Proj
+      module Api
+        extend FFI::Library
+        ffi_lib '/usr/local/lib/libproj.19.dylib'
+
+        typedef :pointer, :PJ
+        typedef :pointer, :PJ_CONTEXT
+        typedef :pointer, :PJ_AREA
+
+        # enum :PJ_TYPE,
+        #   %i[
+        #     PJ_TYPE_UNKNOWN
+        #     PJ_TYPE_ELLIPSOID
+        #     PJ_TYPE_PRIME_MERIDIAN
+        #     PJ_TYPE_GEODETIC_REFERENCE_FRAME
+        #     PJ_TYPE_DYNAMIC_GEODETIC_REFERENCE_FRAME
+        #     PJ_TYPE_VERTICAL_REFERENCE_FRAME
+        #     PJ_TYPE_DYNAMIC_VERTICAL_REFERENCE_FRAME
+        #     PJ_TYPE_DATUM_ENSEMBLE
+        #     PJ_TYPE_CRS
+        #     PJ_TYPE_GEODETIC_CRS
+        #     PJ_TYPE_GEOCENTRIC_CRS
+        #     PJ_TYPE_GEOGRAPHIC_CRS
+        #     PJ_TYPE_GEOGRAPHIC_2D_CRS
+        #     PJ_TYPE_GEOGRAPHIC_3D_CRS
+        #     PJ_TYPE_VERTICAL_CRS
+        #     PJ_TYPE_PROJECTED_CRS
+        #     PJ_TYPE_COMPOUND_CRS
+        #     PJ_TYPE_TEMPORAL_CRS
+        #     PJ_TYPE_ENGINEERING_CRS
+        #     PJ_TYPE_BOUND_CRS
+        #     PJ_TYPE_OTHER_CRS
+        #     PJ_TYPE_CONVERSION
+        #     PJ_TYPE_TRANSFORMATION
+        #     PJ_TYPE_CONCATENATED_OPERATION
+        #     PJ_TYPE_OTHER_COORDINATE_OPERATION
+        #   ]
+        enum :PJ_DIRECTION, [:PJ_FWD, 1, :PJ_IDENT, 0, :PJ_INV, -1]
+
+        class PJ_XYZT < FFI::Struct
+          layout :x, :double, :y, :double, :z, :double, :t, :double
+        end
+
+        class PJ_UVWT < FFI::Struct
+          layout :u, :double, :v, :double, :w, :double, :t, :double
+        end
+
+        class PJ_LPZT < FFI::Struct
+          layout :lam, :double, :phi, :double, :z, :double, :t, :double
+        end
+
+        # Rotations: omega, phi, kappa
+        class PJ_OPK < FFI::Struct
+          layout :o, :double, :p, :double, :k, :double
+        end
+
+        # East, North, Up
+        class PJ_ENU < FFI::Struct
+          layout :e, :double, :n, :double, :u, :double
+        end
+
+        # Geodesic length, fwd azi, rev azi
+        class PJ_GEOD < FFI::Struct
+          layout :s, :double, :a1, :double, :a2, :double
+        end
+
+        class PJ_UV < FFI::Struct
+          layout :u, :double, :v, :double
+        end
+
+        class PJ_XY < FFI::Struct
+          layout :x, :double, :y, :double
+        end
+
+        class PJ_LP < FFI::Struct
+          layout :lam, :double, :phi, :double
+        end
+
+        class PJ_XYZ < FFI::Struct
+          layout :x, :double, :y, :double, :z, :double
+        end
+
+        class PJ_UVW < FFI::Struct
+          layout :u, :double, :v, :double, :w, :double
+        end
+
+        class PJ_LPZ < FFI::Struct
+          layout :lam, :double, :phi, :double, :z, :double
+        end
+
+        class PJ_COORD < FFI::Union
+          layout :v,
+                 [:double, 4],
+                 :xyzt, PJ_XYZT,
+                 :uvwt, PJ_UVWT,
+                 :lpzt, PJ_LPZT,
+                 :geod, PJ_GEOD,
+                 :opk, PJ_OPK,
+                 :enu, PJ_ENU,
+                 :xyz, PJ_XYZ,
+                 :uvw, PJ_UVW,
+                 :lpz, PJ_LPZ,
+                 :xy, PJ_XY,
+                 :uv, PJ_UV,
+                 :lp, PJ_LP
+        end
+
+        class PJ_INFO < FFI::Struct
+          layout :major, :int, # Major release number
+                 :minor, :int,  # Minor release number
+                 :patch, :int,  # Patch level
+                 :release, :string,  # Release info. Version + date
+                 :version, :string,   # Full version number
+                 :searchpath, :string,  # Paths where init and grid files are looked for. Paths are separated by
+                                        # semi-colons on Windows, and colons on non-Windows platforms.
+                 :paths, :pointer,
+                 :path_count, :size_t
+        end
+
+        class PJ_PROJ_INFO < FFI::Struct
+          layout :id, :string, # Name of the projection in question
+            :description, :string, # Description of the projection
+            :definition, :string, # Projection definition
+            :has_inverse, :bool, # 1 if an inverse mapping exists, 0 otherwise
+            :accuracy, :double # Expected accuracy of the transformation. -1 if unknown.
+
+          def to_s
+            "<#{self.class.name} id: #{self[:id]},  description: #{self[:description]}, definition: #{self[:definition]}, has_inverse: #{self[:has_inverse]} accuracy: #{self[:accuracy]}"
+          end
+        end
+
+        attach_function :proj_info, [], PJ_INFO.by_value
+        attach_function :proj_create, %i[PJ_CONTEXT string], :PJ
+        attach_function :proj_destroy, %i[PJ], :PJ
+        attach_function :proj_pj_info, %i[PJ], PJ_PROJ_INFO.by_value
+        attach_function :proj_angular_output, %i[PJ PJ_DIRECTION], :bool
+        attach_function :proj_create_crs_to_crs, %i[PJ_CONTEXT string string PJ_AREA], :PJ
+        attach_function :proj_trans, [:PJ, :PJ_DIRECTION, PJ_COORD.by_value], PJ_COORD.by_value
+      end
+
+      class Pj
+        def self.finalize(pointer)
+          # TODO: why we need a proc here?
+          proc { Api.proj_destroy(pointer) }
+        end
+
+        attr_reader :original_str
+
+        def initialize(definition, radians = false)
+          @radians = radians
+          @original_str = definition
+          @pointer = Api.proj_create(nil, definition)
+          ObjectSpace.define_finalizer(self, self.class.finalize(@pointer))
+        end
+
+        def radians?
+          @radians
+        end
+
+        def geographic?
+          angular?
+        end
+
+        def to_ptr
+          pointer
+        end
+
+        def canonical_str
+          info[:definition].force_encoding('UTF-8')
+        end
+
+        def ==(other)
+          self.class == other.class && canonical_hash == other.canonical_hash &&
+            radians? == other.radians? &&
+            id == other.id
+        end
+
+        def id
+          info[:id]
+        end
+
+        def canonical_hash
+          unless defined?(@canonical_hash)
+            @canonical_hash = {}
+            canonical_str.strip.split(/\s+/).each do |elem_|
+              @canonical_hash[Regexp.last_match(1)] = Regexp.last_match(3) if elem_ =~ /^\+(\w+)(=(\S+))?$/
+            end
+          end
+          @canonical_hash
+        end
+
+        def hash
+          canonical_hash.hash
+        end
+
+        alias eql? ==
+
+        private
+
+        def info
+          Api.proj_pj_info(self)
+        end
+
+        def angular?
+          # Inverting this fixed the x value.
+          Api.proj_angular_output(self, :PJ_INV)
+        end
+
+        attr_reader :pointer
+      end
+
+      class Coordinate
+        # TODO: rename coord to struct
+        def self.from_coord(pj_coord)
+          result = self.allocate
+          result.instance_variable_set(:@coord, pj_coord)
+          result
+        end
+
+        def initialize(x:, y:, z: nil)
+          @coord = Api::PJ_COORD.new
+          @coord[:v][0] = x
+          @coord[:v][1] = y
+          @coord[:v][2] = z if z
+        end
+
+        def to_ptr
+          coord.to_ptr
+        end
+
+        def x
+          coord[:v][0]
+        end
+
+        def x=(x)
+          coord[:v][0] = x
+        end
+
+        def y
+          coord[:v][1]
+        end
+
+        def y=(y)
+          coord[:v][1] = y
+        end
+
+        def z
+          coord[:v][2]
+        end
+
+        private
+
+        attr_reader :coord
+      end
+
+      class Transform
+        def self.finalize(pointer)
+          # TODO: why we need a proc here?
+          proc { Api.proj_destroy(pointer) }
+        end
+
+        def initialize(source, target)
+          @pointer =
+            Api.proj_create_crs_to_crs(
+              nil,
+              source.canonical_str,
+              target.canonical_str,
+              nil
+            )
+          ObjectSpace.define_finalizer(self, self.class.finalize(pointer))
+        end
+
+        def to_ptr
+          pointer
+        end
+
+        def forward(coord)
+          Coordinate.from_coord(Api.proj_trans(self, :PJ_FWD, coord))
+        end
+
+        private
+
+        attr_reader :pointer
+      end
+    end
+
     # This is a Ruby wrapper around a Proj4 coordinate system.
     # It represents a single geographic coordinate system, which may be
     # a flat projection, a geocentric (3-dimensional) coordinate system,
@@ -143,10 +429,9 @@ module RGeo
           respond_to?(:_create)
         end
 
-        # Returns the Proj library version as an integer (example: 493).
-        # TODO: return as string of the format "x.y.z".
+        # Returns the Proj library version as an integer (example: 7.1.1).
         def version
-          _proj_version
+          Proj::Api.proj_info[:version]
         end
 
         # Create a new Proj4 object, given a definition, which may be
@@ -173,10 +458,13 @@ module RGeo
               defn_ = defn_.map { |k_, v_| v_ ? "+#{k_}=#{v_}" : "+#{k_}" }.join(" ")
             end
             defn_ = defn_.sub(/^(\s*)/, '\1+').gsub(/(\s+)([^+\s])/, '\1+\2') unless defn_ =~ /^\s*\+/
-            result_ = _create(defn_, opts_[:radians])
-            result_ = nil unless result_._valid?
+
+            Proj::Pj.new(defn_, opts_[:radians])
+
+            # result_ = _create(defn_, opts_[:radians])
+            # result_ = nil unless result_._valid?
           end
-          result_
+          # result_
         end
 
         # Create a new Proj4 object, given a definition, which may be
@@ -208,16 +496,22 @@ module RGeo
         # or three elements.
 
         def transform_coords(from_proj_, to_proj_, x_, y_, z_ = nil)
-          if !from_proj_._radians? && from_proj_._geographic?
+          if !from_proj_.radians? && from_proj_.geographic?
             x_ *= ImplHelper::Math::RADIANS_PER_DEGREE
             y_ *= ImplHelper::Math::RADIANS_PER_DEGREE
           end
-          result_ = _transform_coords(from_proj_, to_proj_, x_, y_, z_)
-          if result_ && !to_proj_._radians? && to_proj_._geographic?
-            result_[0] *= ImplHelper::Math::DEGREES_PER_RADIAN
-            result_[1] *= ImplHelper::Math::DEGREES_PER_RADIAN
+
+          transform = Proj::Transform.new(from_proj_, to_proj_)
+          coord = Proj::Coordinate.new(x: x_, y: y_, z: z_)
+          transformed_coord = transform.forward(coord)
+
+          if transformed_coord && !to_proj_.radians? && to_proj_.geographic?
+            transformed_coord.x = transformed_coord.x * ImplHelper::Math::DEGREES_PER_RADIAN
+            transformed_coord.y = transformed_coord.y * ImplHelper::Math::DEGREES_PER_RADIAN
           end
-          result_
+          result = [transformed_coord.x, transformed_coord.y]
+          result << transformed_coord.z if z_
+          result
         end
 
         # Low-level geometry transform method.

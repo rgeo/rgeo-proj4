@@ -16,6 +16,7 @@ Gem::Specification.new do |spec|
   spec.extensions    = ["ext/proj4_c_impl/extconf.rb"]
 
   spec.add_dependency "rgeo", "~> 2.0"
+  spec.add_dependency "ffi"
 
   spec.add_development_dependency "minitest", "~> 5.11"
   spec.add_development_dependency "rake", "~> 12.0"

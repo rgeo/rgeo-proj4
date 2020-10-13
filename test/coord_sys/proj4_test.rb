@@ -4,15 +4,14 @@ require "test_helper"
 
 class TestProj4 < Minitest::Test # :nodoc:
   def test_proj4_version
-    assert_kind_of Integer, RGeo::CoordSys::Proj4.version
-    # assert_match(/^\d+\.\d+(\.\d+)?$/, RGeo::CoordSys::Proj4.version)
+    assert_match(/^\d+\.\d+(\.\d+)?$/, RGeo::CoordSys::Proj4.version)
   end
 
   def test_create_wgs84
     proj = RGeo::CoordSys::Proj4.create("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
     assert_equal(true, proj.geographic?)
     assert_equal("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs", proj.original_str)
-    assert_equal(" +proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +towgs84=0,0,0", proj.canonical_str)
+    assert_equal("proj=longlat ellps=WGS84 datum=WGS84 no_defs towgs84=0,0,0", proj.canonical_str)
   end
 
   def test_get_wgs84_geographic

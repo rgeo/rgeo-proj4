@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "ffi"
 require "rgeo"
 require "rgeo/proj4/version"
 require "rgeo/coord_sys/proj4"
