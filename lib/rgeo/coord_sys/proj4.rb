@@ -173,6 +173,12 @@ module RGeo
               defn_ = defn_.map { |k_, v_| v_ ? "+#{k_}=#{v_}" : "+#{k_}" }.join(" ")
             end
             defn_ = defn_.sub(/^(\s*)/, '\1+').gsub(/(\s+)([^+\s])/, '\1+\2') unless defn_ =~ /^\s*\+/
+
+            # if using proj string, add type=crs
+            if defn_.include?("+")
+              defn_ += " +type=crs" unless defn_.include?("type=crs")
+            end
+
             result_ = _create(defn_, opts_[:radians])
             result_ = nil unless result_._valid?
           end
