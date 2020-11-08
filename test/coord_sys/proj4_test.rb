@@ -31,15 +31,22 @@ class TestProj4 < Minitest::Test # :nodoc:
   end
 
   def test_simple_mercator_transform
+    # Reference transformation created with PostGIS
+    #
+    # WGS84 to WGS 84 / Pseudo-Mercator:
+    # SELECT ST_AsText(ST_Transform(ST_SetSRID(ST_MakePoint(degrees(0.01), degrees(0.01)), 4326), 3857));
+    #
+    # WGS 84 / Pseudo-Mercator to WGS84:
+    # SELECT radians(ST_X(point)), radians(ST_Y(point)) FROM (SELECT ST_Transform(ST_SetSRID(ST_MakePoint(-20000000, -20000000), 3857), 4326) AS point) p;
     geography = RGeo::CoordSys::Proj4.create("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs", radians: true)
     projection = RGeo::CoordSys::Proj4.create("+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs")
-    assert_xy_close(project_merc(0, 0), RGeo::CoordSys::Proj4.transform_coords(geography, projection, 0, 0, nil))
-    assert_xy_close(project_merc(0.01, 0.01), RGeo::CoordSys::Proj4.transform_coords(geography, projection, 0.01, 0.01, nil))
-    assert_xy_close(project_merc(1, 1), RGeo::CoordSys::Proj4.transform_coords(geography, projection, 1, 1, nil))
-    assert_xy_close(project_merc(-1, -1), RGeo::CoordSys::Proj4.transform_coords(geography, projection, -1, -1, nil))
-    assert_xy_close(unproject_merc(0, 0), RGeo::CoordSys::Proj4.transform_coords(projection, geography, 0, 0, nil))
-    assert_xy_close(unproject_merc(10_000, 10_000), RGeo::CoordSys::Proj4.transform_coords(projection, geography, 10_000, 10_000, nil))
-    assert_xy_close(unproject_merc(-20_000_000, -20_000_000), RGeo::CoordSys::Proj4.transform_coords(projection, geography, -20_000_000, -20_000_000, nil))
+    assert_xy_close([0, 0], RGeo::CoordSys::Proj4.transform_coords(geography, projection, 0, 0, nil))
+    assert_xy_close([63781.37, 63782.4330494076], RGeo::CoordSys::Proj4.transform_coords(geography, projection, 0.01, 0.01, nil))
+    assert_xy_close([6378137, 7820815.27608548], RGeo::CoordSys::Proj4.transform_coords(geography, projection, 1, 1, nil))
+    assert_xy_close([-6378137, -7820815.27608548], RGeo::CoordSys::Proj4.transform_coords(geography, projection, -1, -1, nil))
+    assert_xy_close([0, 0], RGeo::CoordSys::Proj4.transform_coords(projection, geography, 0, 0, nil))
+    assert_xy_close([0.0015678559428873979, 0.001567855300544462], RGeo::CoordSys::Proj4.transform_coords(projection, geography, 10_000, 10_000, nil))
+    assert_xy_close([-3.1357118857747963, -1.4839134260634315], RGeo::CoordSys::Proj4.transform_coords(projection, geography, -20_000_000, -20_000_000, nil))
   end
 
   def test_equivalence
@@ -112,14 +119,6 @@ class TestProj4 < Minitest::Test # :nodoc:
   end
 
   private
-
-  def project_merc(x, y)
-    [x * 6_378_137.0, Math.log(Math.tan(Math::PI / 4.0 + y / 2.0)) * 6_378_137.0]
-  end
-
-  def unproject_merc(x, y)
-    [x / 6_378_137.0, (2.0 * Math.atan(Math.exp(y / 6_378_137.0)) - Math::PI / 2.0)]
-  end
 
   def assert_close_enough(a, b)
     delta = Math.sqrt(a * a + b * b) * 0.00000001
