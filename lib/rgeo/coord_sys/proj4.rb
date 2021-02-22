@@ -105,6 +105,21 @@ module RGeo
         _original_str
       end
 
+      # Returns the WKT representation of the CRS.
+
+      def as_text
+        _as_text
+      end
+
+      # Returns the string representing the authority and code of the
+      # CRS if it exists, nil otherwise.
+      #
+      # Ex. EPSG:4326
+
+      def auth_name
+        _auth_name
+      end
+
       # Returns true if this Proj4 object is a geographic (lat-long)
       # coordinate system.
 

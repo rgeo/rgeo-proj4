@@ -188,6 +188,42 @@ static VALUE method_proj4_canonical_str(VALUE self)
   return result;
 }
 
+static VALUE method_proj4_wkt_str(VALUE self)
+{
+  VALUE result;
+  PJ *pj;
+  const char *str;
+
+  result = Qnil;
+  pj = RGEO_PROJ4_DATA_PTR(self)->pj;
+  if (pj) {
+    const char *const options[] = {"MULTILINE=NO", NULL};
+    str = proj_as_wkt(PJ_DEFAULT_CTX, pj, PJ_PROJ_5, options);
+    if(str){
+      result = rb_str_new2(str);
+    }
+  }
+  return result;
+}
+
+static VALUE method_proj4_auth_name_str(VALUE self)
+{
+  VALUE result;
+  PJ *pj;
+  const char *id;
+  const char *auth;
+
+  result = Qnil;
+  pj = RGEO_PROJ4_DATA_PTR(self)->pj;
+  if (pj) {
+    auth = proj_get_id_auth_name(pj, 0);
+    id = proj_get_id_code(pj, 0);
+    if(id && auth){
+      result = rb_sprintf("%s:%s", auth, id);
+    }
+  }
+  return result;
+}
 
 static VALUE method_proj4_is_geographic(VALUE self)
 {
@@ -319,6 +355,8 @@ static void rgeo_init_proj4()
   rb_define_method(proj4_class, "_set_value", method_proj4_set_value, 2);
   rb_define_method(proj4_class, "_original_str", method_proj4_original_str, 0);
   rb_define_method(proj4_class, "_canonical_str", method_proj4_canonical_str, 0);
+  rb_define_method(proj4_class, "_as_text", method_proj4_wkt_str, 0);
+  rb_define_method(proj4_class, "_auth_name", method_proj4_auth_name_str, 0);
   rb_define_method(proj4_class, "_valid?", method_proj4_is_valid, 0);
   rb_define_method(proj4_class, "_geographic?", method_proj4_is_geographic, 0);
   rb_define_method(proj4_class, "_geocentric?", method_proj4_is_geocentric, 0);
