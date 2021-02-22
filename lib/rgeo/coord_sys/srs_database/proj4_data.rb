@@ -81,11 +81,12 @@ module RGeo
           ident_ = ident_.to_s
           return @cache[ident_] if @cache&.include?(ident_)
           result_ = nil
-          if @populate_state == 0
+          case @populate_state
+          when 0
             data_ = search_file(ident_)
             result_ = Entry.new(ident_, authority: @authority, authority_code: @authority ? ident_ : nil, name: data_[1], proj4: data_[2]) if data_
             @cache[ident_] = result_ if @cache
-          elsif @populate_state == 1
+          when 1
             search_file(nil)
             result_ = @cache[ident_]
             @populate_state = 2
