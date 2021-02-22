@@ -113,12 +113,10 @@ module RGeo
                 cur_name_ = line_[comment_delim_ + 1..-1].strip
                 line_ = line_[0..comment_delim_ - 1].strip
               end
-              unless cur_ident_
-                if line_ =~ /^<(\w+)>(.*)/
-                  cur_ident_ = Regexp.last_match(1)
-                  cur_text_ = []
-                  line_ = Regexp.last_match(2).strip
-                end
+              if !cur_ident_ && (line_ =~ /^<(\w+)>(.*)/)
+                cur_ident_ = Regexp.last_match(1)
+                cur_text_ = []
+                line_ = Regexp.last_match(2).strip
               end
               next unless cur_ident_
               if line_[-2..-1] == "<>"

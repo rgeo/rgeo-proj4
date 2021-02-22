@@ -1,10 +1,13 @@
 /*
   Main initializer for Proj4 wrapper
 */
-#ifdef HAVE_PROJ_API_H
-#ifdef HAVE_PJ_INIT_PLUS
-#define ACCEPT_USE_OF_DEPRECATED_PROJ_API_H
+#ifdef HAVE_PROJ_H
+#ifdef HAVE_PROJ_CREATE
+#ifdef HAVE_PROJ_CREATE_CRS_TO_CRS_FROM_PJ
+#ifdef HAVE_PROJ_NORMALIZE_FOR_VISUALIZATION
 #define RGEO_PROJ4_SUPPORTED
+#endif
+#endif
 #endif
 #endif
 
@@ -240,6 +243,7 @@ static VALUE cmethod_proj4_transform(VALUE module, VALUE from, VALUE to, VALUE x
   PJ *from_pj;
   PJ *to_pj;
   PJ *crs_to_crs;
+  PJ *gis_pj;
   double xval, yval, zval;
   PJ_COORD input;
   PJ_COORD output;
@@ -250,21 +254,31 @@ static VALUE cmethod_proj4_transform(VALUE module, VALUE from, VALUE to, VALUE x
   if (from_pj && to_pj) {
     crs_to_crs = proj_create_crs_to_crs_from_pj(0, from_pj, to_pj, 0, NULL);
     if(crs_to_crs){
-      xval = rb_num2dbl(x);
-      yval = rb_num2dbl(y);
-      zval = 0.0;
-      if (!NIL_P(z)) {
-        zval = rb_num2dbl(z);
-      }
-      input = proj_coord(xval, yval, zval, 0);
-      output = proj_trans(crs_to_crs, PJ_FWD, input);
+      // necessary to use proj_normalize_for_visualization so that we
+      // do not have to worry about the order of coordinates in every
+      // coord system.
+      gis_pj = proj_normalize_for_visualization(0, crs_to_crs);
+      if(gis_pj){
+        proj_destroy(crs_to_crs);
+        crs_to_crs = gis_pj;
 
-      result = rb_ary_new2(NIL_P(z) ? 2 : 3);
-      rb_ary_push(result, DBL2NUM(output.xyz.x));
-      rb_ary_push(result, DBL2NUM(output.xyz.y));
-      if(!NIL_P(z)){
-        rb_ary_push(result, DBL2NUM(output.xyz.z));
+        xval = rb_num2dbl(x);
+        yval = rb_num2dbl(y);
+        zval = 0.0;
+        if (!NIL_P(z)) {
+          zval = rb_num2dbl(z);
+        }
+        input = proj_coord(xval, yval, zval, HUGE_VAL);
+        output = proj_trans(crs_to_crs, PJ_FWD, input);
+
+        result = rb_ary_new2(NIL_P(z) ? 2 : 3);
+        rb_ary_push(result, DBL2NUM(output.xyz.x));
+        rb_ary_push(result, DBL2NUM(output.xyz.y));
+        if(!NIL_P(z)){
+          rb_ary_push(result, DBL2NUM(output.xyz.z));
+        }
       }
+      proj_destroy(crs_to_crs);
     }
   }
   return result;

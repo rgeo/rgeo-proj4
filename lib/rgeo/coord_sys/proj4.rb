@@ -41,8 +41,8 @@ module RGeo
       # there are sometimes multiple ways to express a given coordinate
       # system.
 
-      def eql?(rhs_)
-        rhs_.class == self.class && rhs_.canonical_hash == canonical_hash && rhs_._radians? == _radians?
+      def eql?(other)
+        other.class == self.class && other.canonical_hash == canonical_hash && other._radians? == _radians?
       end
       alias == eql?
 
@@ -172,12 +172,6 @@ module RGeo
             if defn_.is_a?(::Hash)
               defn_ = defn_.map { |k_, v_| v_ ? "+#{k_}=#{v_}" : "+#{k_}" }.join(" ")
             end
-            defn_ = defn_.sub(/^(\s*)/, '\1+').gsub(/(\s+)([^+\s])/, '\1+\2') unless defn_ =~ /^\s*\+/
-
-            # if using proj string, add type=crs
-            if defn_.include?("+")
-              defn_ += " +type=crs" unless defn_.include?("type=crs")
-            end
 
             result_ = _create(defn_, opts_[:radians])
             result_ = nil unless result_._valid?
@@ -214,14 +208,15 @@ module RGeo
         # or three elements.
 
         def transform_coords(from_proj_, to_proj_, x_, y_, z_ = nil)
-          if !from_proj_._radians? && from_proj_._geographic?
-            x_ *= ImplHelper::Math::RADIANS_PER_DEGREE
-            y_ *= ImplHelper::Math::RADIANS_PER_DEGREE
+          if from_proj_._radians? && from_proj_._geographic?
+            x_ *= ImplHelper::Math::DEGREES_PER_RADIAN
+            y_ *= ImplHelper::Math::DEGREES_PER_RADIAN
           end
+
           result_ = _transform_coords(from_proj_, to_proj_, x_, y_, z_)
-          if result_ && !to_proj_._radians? && to_proj_._geographic?
-            result_[0] *= ImplHelper::Math::DEGREES_PER_RADIAN
-            result_[1] *= ImplHelper::Math::DEGREES_PER_RADIAN
+          if result_ && to_proj_._radians? && to_proj_._geographic?
+            result_[0] *= ImplHelper::Math::RADIANS_PER_DEGREE
+            result_[1] *= ImplHelper::Math::RADIANS_PER_DEGREE
           end
           result_
         end
@@ -265,15 +260,16 @@ module RGeo
           to_has_m_ = to_factory_.property(:has_m_coordinate)
           x_ = from_point_.x
           y_ = from_point_.y
-          if !from_proj_._radians? && from_proj_._geographic?
-            x_ *= ImplHelper::Math::RADIANS_PER_DEGREE
-            y_ *= ImplHelper::Math::RADIANS_PER_DEGREE
+          if from_proj_._radians? && from_proj_._geographic?
+            x_ *= ImplHelper::Math::DEGREES_PER_RADIAN
+            y_ *= ImplHelper::Math::DEGREES_PER_RADIAN
           end
           coords_ = _transform_coords(from_proj_, to_proj_, x_, y_, from_has_z_ ? from_point_.z : nil)
           return unless coords_
-          if !to_proj_._radians? && to_proj_._geographic?
-            coords_[0] *= ImplHelper::Math::DEGREES_PER_RADIAN
-            coords_[1] *= ImplHelper::Math::DEGREES_PER_RADIAN
+
+          if to_proj_._radians? && to_proj_._geographic?
+            coords_[0] *= ImplHelper::Math::RADIANS_PER_DEGREE
+            coords_[1] *= ImplHelper::Math::RADIANS_PER_DEGREE
           end
           extras_ = []
           extras_ << coords_[2].to_f if to_has_z_
