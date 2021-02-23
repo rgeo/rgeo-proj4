@@ -17,7 +17,6 @@ jobs:
           - "2.7"
           - "2.6"
           - "2.5"
-          - jruby
         os:
           - ubuntu
           - macos
@@ -37,7 +36,8 @@ jobs:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: false
       - name: Bundle Install
-        run: bundle install # Need this since RGeo w/o GEOS versions were cached
+        run: |
+          bundle install
       - name: Test
         run: CI=1 bundle exec rake
   RuboCop:
