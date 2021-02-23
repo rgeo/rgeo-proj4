@@ -35,7 +35,9 @@ jobs:
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
-          bundler-cache: true
+          bundler-cache: false
+      - name: Bundle Install
+        run: bundle install # Need this since RGeo w/o GEOS versions were cached
       - name: Test
         run: CI=1 bundle exec rake
   RuboCop:
