@@ -26,16 +26,16 @@ jobs:
     name: Ruby ${{ matrix.ruby }} (${{ matrix.os }})
     steps:
       - uses: actions/checkout@v2
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: ${{ matrix.ruby }}
-          bundler-cache: true
       - name: Install Packages (Linux)
         if: matrix.os == 'ubuntu'
         run: sudo apt-get install libgeos-dev libproj-dev -y
       - name: Install Packages (Mac)
         if: matrix.os == 'macos'
         run: brew install geos proj
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
       - name: Test
         run: CI=1 bundle exec rake
   RuboCop:
