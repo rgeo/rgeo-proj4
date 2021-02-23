@@ -37,7 +37,7 @@ jobs:
         if: matrix.os == 'macos'
         run: brew install geos proj
       - name: Test
-        run: bundle exec rake
+        run: CI=1 bundle exec rake
   RuboCop:
     runs-on: ubuntu-latest
     steps:
@@ -47,4 +47,4 @@ jobs:
           ruby-version: "3.0"
           bundler-cache: true
       - run: |
-          bundle exec rubocop --color --parallel
+          CI=1 bundle exec rubocop --color --parallel
