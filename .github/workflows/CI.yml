@@ -32,7 +32,7 @@ jobs:
           bundler-cache: true
       - name: Install Packages (Linux)
         if: matrix.os == 'ubuntu'
-        run: sudo apt-get install libgeos-dev proj-bin -y
+        run: sudo apt-get install libgeos-dev libproj-dev -y
       - name: Install Packages (Mac)
         if: matrix.os == 'macos'
         run: brew install geos proj

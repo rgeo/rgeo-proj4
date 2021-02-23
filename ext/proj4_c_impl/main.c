@@ -198,7 +198,7 @@ static VALUE method_proj4_wkt_str(VALUE self)
   pj = RGEO_PROJ4_DATA_PTR(self)->pj;
   if (pj) {
     const char *const options[] = {"MULTILINE=NO", NULL};
-    str = proj_as_wkt(PJ_DEFAULT_CTX, pj, PJ_PROJ_5, options);
+    str = proj_as_wkt(PJ_DEFAULT_CTX, pj, PJ_WKT2_2019, options);
     if(str){
       result = rb_str_new2(str);
     }
