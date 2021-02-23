@@ -27,7 +27,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Install Packages (Linux)
         if: matrix.os == 'ubuntu'
-        run: sudo apt-get install libgeos-dev libproj-dev proj-bin -y
+        run: sudo apt-get install libgeos-dev libproj-dev=6.3.1-1 proj-bin=6.3.1-1 -y
       - name: Install Packages (Mac)
         if: matrix.os == 'macos'
         run: brew install geos proj
