@@ -99,12 +99,11 @@ static VALUE method_proj4_initialize_copy(VALUE self, VALUE orig)
   // Copy value from orig
   orig_data = RGEO_PROJ4_DATA_PTR(orig);
   if (!NIL_P(orig_data->original_str)) {
-    self_data->pj = proj_create(0, RSTRING_PTR(orig_data->original_str));
+    self_data->pj = proj_create(PJ_DEFAULT_CTX, RSTRING_PTR(orig_data->original_str));
   }
   else {
-    str = proj_as_proj_string(0, orig_data->pj, PJ_PROJ_4, NULL);
-    self_data->pj = proj_create(0, str);
-    // pj_dalloc(str);
+    str = proj_as_proj_string(PJ_DEFAULT_CTX, orig_data->pj, PJ_PROJ_4, NULL);
+    self_data->pj = proj_create(PJ_DEFAULT_CTX, str);
   }
   self_data->original_str = orig_data->original_str;
   self_data->uses_radians = orig_data->uses_radians;
@@ -130,7 +129,7 @@ static VALUE method_proj4_set_value(VALUE self, VALUE str, VALUE uses_radians)
   }
 
   // Set new data
-  self_data->pj = proj_create(0, RSTRING_PTR(str));
+  self_data->pj = proj_create(PJ_DEFAULT_CTX, RSTRING_PTR(str));
   self_data->original_str = str;
   self_data->uses_radians = RTEST(uses_radians) ? 1 : 0;
 
@@ -149,7 +148,7 @@ static VALUE method_proj4_get_geographic(VALUE self)
   if (new_data) {
     self_data = RGEO_PROJ4_DATA_PTR(self);
 
-    new_data->pj = proj_crs_get_geodetic_crs(0, self_data->pj);
+    new_data->pj = proj_crs_get_geodetic_crs(PJ_DEFAULT_CTX, self_data->pj);
     new_data->original_str = Qnil;
     new_data->uses_radians = self_data->uses_radians;
     result = Data_Wrap_Struct(CLASS_OF(self), mark_proj4_func, destroy_proj4_func, new_data);
@@ -179,7 +178,7 @@ static VALUE method_proj4_canonical_str(VALUE self)
   result = Qnil;
   pj = RGEO_PROJ4_DATA_PTR(self)->pj;
   if (pj) {
-    str = proj_as_proj_string(0, pj, PJ_PROJ_4, NULL);
+    str = proj_as_proj_string(PJ_DEFAULT_CTX, pj, PJ_PROJ_4, NULL);
     if (str) {
       result = rb_str_new2(str);
       // pj_dalloc(str);
@@ -288,12 +287,12 @@ static VALUE cmethod_proj4_transform(VALUE module, VALUE from, VALUE to, VALUE x
   from_pj = RGEO_PROJ4_DATA_PTR(from)->pj;
   to_pj = RGEO_PROJ4_DATA_PTR(to)->pj;
   if (from_pj && to_pj) {
-    crs_to_crs = proj_create_crs_to_crs_from_pj(0, from_pj, to_pj, 0, NULL);
+    crs_to_crs = proj_create_crs_to_crs_from_pj(PJ_DEFAULT_CTX, from_pj, to_pj, 0, NULL);
     if(crs_to_crs){
       // necessary to use proj_normalize_for_visualization so that we
       // do not have to worry about the order of coordinates in every
       // coord system.
-      gis_pj = proj_normalize_for_visualization(0, crs_to_crs);
+      gis_pj = proj_normalize_for_visualization(PJ_DEFAULT_CTX, crs_to_crs);
       if(gis_pj){
         proj_destroy(crs_to_crs);
         crs_to_crs = gis_pj;
@@ -330,7 +329,7 @@ static VALUE cmethod_proj4_create(VALUE klass, VALUE str, VALUE uses_radians)
   Check_Type(str, T_STRING);
   data = ALLOC(RGeo_Proj4Data);
   if (data) {
-    data->pj = proj_create(0, RSTRING_PTR(str));
+    data->pj = proj_create(PJ_DEFAULT_CTX, RSTRING_PTR(str));
     data->original_str = str;
     data->uses_radians = RTEST(uses_radians) ? 1 : 0;
     result = Data_Wrap_Struct(klass, mark_proj4_func, destroy_proj4_func, data);
