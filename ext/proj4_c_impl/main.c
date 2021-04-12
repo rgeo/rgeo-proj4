@@ -11,6 +11,12 @@
 #endif
 #endif
 
+#ifdef HAVE_RB_GC_MARK_MOVABLE
+#define mark rb_gc_mark_movable
+#else
+#define mark rb_gc_mark
+#endif
+
 #ifdef __cplusplus
 #define RGEO_BEGIN_C extern "C" {
 #define RGEO_END_C }
@@ -53,24 +59,51 @@ static void rgeo_proj4_free(void *ptr)
 
 static size_t rgeo_proj4_memsize(const void *ptr)
 {
+  size_t size = 0;
   const RGeo_Proj4Data *data = (const RGeo_Proj4Data *)ptr;
-  return sizeof(*data);
+
+  size += sizeof(*data);
+  if(data->pj){
+    size += sizeof(data->pj);
+  }
+  return size;
 }
 
 static void rgeo_proj4_mark(void *ptr)
 {
   RGeo_Proj4Data *data = (RGeo_Proj4Data *)ptr;
   if(!NIL_P(data->original_str)){
-    rb_gc_mark(data->original_str);
+    mark(data->original_str);
   }
 }
 
+#ifdef HAVE_RB_GC_MARK_MOVABLE
+static void rgeo_proj4_compact(void *ptr)
+{
+  RGeo_Proj4Data *data = (RGeo_Proj4Data *)ptr;
+  if(data && !NIL_P(data->original_str)){
+    data->original_str = rb_gc_location(data->original_str);
+  }
+}
+#endif
+
+static void rgeo_proj4_clear_struct(RGeo_Proj4Data *data)
+{
+  if(data->pj){
+    proj_destroy(data->pj);
+    data->pj = NULL;
+    data->original_str = Qnil;
+  }
+}
 
 static const rb_data_type_t rgeo_proj4_data_type = {
     "RGeo::CoordSys::Proj4",
-    {rgeo_proj4_mark, rgeo_proj4_free, rgeo_proj4_memsize},
-    0,
-    0,
+    {rgeo_proj4_mark, rgeo_proj4_free, rgeo_proj4_memsize,
+#ifdef HAVE_RB_GC_MARK_MOVABLE
+    rgeo_proj4_compact
+#endif
+    },
+    0, 0,
     RUBY_TYPED_FREE_IMMEDIATELY};
 
 static VALUE rgeo_proj4_data_alloc(VALUE self)
@@ -92,23 +125,17 @@ static VALUE rgeo_proj4_data_alloc(VALUE self)
 static VALUE method_proj4_initialize_copy(VALUE self, VALUE orig)
 {
   RGeo_Proj4Data *self_data;
-  PJ *pj;
   RGeo_Proj4Data *orig_data;
   const char* str;
 
   // Clear out any existing value
   TypedData_Get_Struct(self, RGeo_Proj4Data, &rgeo_proj4_data_type, self_data);
-  pj = self_data->pj;
-  if (pj) {
-    proj_destroy(pj);
-    self_data->pj = NULL;
-    self_data->original_str = Qnil;
-  }
+  rgeo_proj4_clear_struct(self_data);
 
   // Copy value from orig
   TypedData_Get_Struct(orig, RGeo_Proj4Data, &rgeo_proj4_data_type, orig_data);
   if (!NIL_P(orig_data->original_str)) {
-    self_data->pj = proj_create(PJ_DEFAULT_CTX, RSTRING_PTR(orig_data->original_str));
+    self_data->pj = proj_create(PJ_DEFAULT_CTX, StringValuePtr(orig_data->original_str));
   }
   else {
     str = proj_as_proj_string(PJ_DEFAULT_CTX, orig_data->pj, PJ_PROJ_4, NULL);
@@ -124,21 +151,15 @@ static VALUE method_proj4_initialize_copy(VALUE self, VALUE orig)
 static VALUE method_proj4_set_value(VALUE self, VALUE str, VALUE uses_radians)
 {
   RGeo_Proj4Data *self_data;
-  PJ *pj;
 
   Check_Type(str, T_STRING);
 
   // Clear out any existing value
   TypedData_Get_Struct(self, RGeo_Proj4Data, &rgeo_proj4_data_type, self_data);
-  pj = self_data->pj;
-  if (pj) {
-    proj_destroy(pj);
-    self_data->pj = NULL;
-    self_data->original_str = Qnil;
-  }
+  rgeo_proj4_clear_struct(self_data);
 
   // Set new data
-  self_data->pj = proj_create(PJ_DEFAULT_CTX, RSTRING_PTR(str));
+  self_data->pj = proj_create(PJ_DEFAULT_CTX, StringValuePtr(str));
   self_data->original_str = str;
   self_data->uses_radians = RTEST(uses_radians) ? 1 : 0;
 
@@ -170,7 +191,6 @@ static VALUE method_proj4_original_str(VALUE self)
 {
   RGeo_Proj4Data *data;
   TypedData_Get_Struct(self, RGeo_Proj4Data, &rgeo_proj4_data_type, data);
-
   return data->original_str;
 }
 
@@ -179,7 +199,6 @@ static VALUE method_proj4_uses_radians(VALUE self)
 {
   RGeo_Proj4Data *data;
   TypedData_Get_Struct(self, RGeo_Proj4Data, &rgeo_proj4_data_type, data);
-
   return data->uses_radians ? Qtrue : Qfalse;
 }
 
@@ -330,10 +349,8 @@ static VALUE cmethod_proj4_transform(VALUE module, VALUE from, VALUE to, VALUE x
 
         xval = rb_num2dbl(x);
         yval = rb_num2dbl(y);
-        zval = 0.0;
-        if (!NIL_P(z)) {
-          zval = rb_num2dbl(z);
-        }
+        zval = NIL_P(z) ? 0.0 : rb_num2dbl(z);
+
         input = proj_coord(xval, yval, zval, HUGE_VAL);
         output = proj_trans(crs_to_crs, PJ_FWD, input);
 
@@ -360,7 +377,7 @@ static VALUE cmethod_proj4_create(VALUE klass, VALUE str, VALUE uses_radians)
   Check_Type(str, T_STRING);
   data = ALLOC(RGeo_Proj4Data);
   if (data) {
-    data->pj = proj_create(PJ_DEFAULT_CTX, RSTRING_PTR(str));
+    data->pj = proj_create(PJ_DEFAULT_CTX, StringValuePtr(str));
     data->original_str = str;
     data->uses_radians = RTEST(uses_radians) ? 1 : 0;
     result = TypedData_Wrap_Struct(klass, &rgeo_proj4_data_type, data);

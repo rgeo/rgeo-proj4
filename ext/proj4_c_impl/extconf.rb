@@ -56,6 +56,8 @@ else
       $libs.gsub!(" -lproj", "")
     end
   end
+  have_func("rb_gc_mark_movable")
+
   unless found_proj_
     puts "**** WARNING: Unable to find Proj headers or Proj version is too old."
     puts "**** Compiling without Proj support."

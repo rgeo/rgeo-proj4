@@ -41,7 +41,7 @@ jobs:
         run: |
           bundle install
       - name: Test
-        run: CI=1 bundle exec rake
+        run: bundle exec rake
   RuboCop:
     runs-on: ubuntu-latest
     steps:
@@ -51,4 +51,4 @@ jobs:
           ruby-version: "3.0"
           bundler-cache: true
       - run: |
-          CI=1 bundle exec rubocop --color --parallel
+          bundle exec rubocop --color --parallel
