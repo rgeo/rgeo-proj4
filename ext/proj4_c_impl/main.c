@@ -217,7 +217,6 @@ static VALUE method_proj4_canonical_str(VALUE self)
     str = proj_as_proj_string(PJ_DEFAULT_CTX, pj, PJ_PROJ_4, NULL);
     if (str) {
       result = rb_str_new2(str);
-      // pj_dalloc(str);
     }
   }
   return result;
