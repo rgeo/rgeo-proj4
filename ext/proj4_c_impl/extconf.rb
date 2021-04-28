@@ -45,15 +45,19 @@ else
 
   found_proj_ = false
   header_dirs_, lib_dirs_ = dir_config("proj", header_dirs_, lib_dirs_)
-  dflag = "-DACCEPT_USE_OF_DEPRECATED_PROJ_API_H"
-  if have_header("proj_api.h", nil, dflag)
+  if have_header("proj.h")
     $libs << " -lproj"
-    if have_func("pj_init_plus", "proj_api.h", dflag)
+
+    if have_func("proj_create", "proj.h")
       found_proj_ = true
+      have_func("proj_create_crs_to_crs_from_pj", "proj.h")
+      have_func("proj_normalize_for_visualization", "proj.h")
     else
       $libs.gsub!(" -lproj", "")
     end
   end
+  have_func("rb_gc_mark_movable")
+
   unless found_proj_
     puts "**** WARNING: Unable to find Proj headers or Proj version is too old."
     puts "**** Compiling without Proj support."

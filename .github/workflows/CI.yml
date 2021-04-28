@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  Build:
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby:
+          - head
+          - "3.0"
+          - "2.7"
+          - "2.6"
+          - "2.5"
+        os:
+          - ubuntu
+          - macos
+    runs-on: ${{ matrix.os }}-latest
+    continue-on-error: ${{ matrix.ruby == 'head' || matrix.os == 'macos' }}
+    name: Ruby ${{ matrix.ruby }} (${{ matrix.os }})
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Packages (Linux)
+        if: matrix.os == 'ubuntu'
+        run: |
+          sudo add-apt-repository ppa:ubuntugis/ubuntugis-unstable
+          sudo apt-get install libgeos-dev libproj-dev proj-bin -y
+      - name: Install Packages (Mac)
+        if: matrix.os == 'macos'
+        run: brew install geos proj
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: false
+      - name: Bundle Install
+        run: |
+          bundle install
+      - name: Test
+        run: bundle exec rake
+  RuboCop:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.0"
+          bundler-cache: true
+      - run: |
+          bundle exec rubocop --color --parallel
