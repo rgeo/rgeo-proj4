@@ -109,7 +109,7 @@ static const rb_data_type_t rgeo_proj4_data_type = {
 static VALUE rgeo_proj4_data_alloc(VALUE self)
 {
   VALUE result;
-  RGeo_Proj4Data *data = malloc(sizeof(RGeo_Proj4Data));
+  RGeo_Proj4Data *data = ALLOC(RGeo_Proj4Data);
 
   result = Qnil;
 
