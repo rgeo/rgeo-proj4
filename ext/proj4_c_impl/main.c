@@ -39,6 +39,11 @@ RGEO_BEGIN_C
 
 #ifdef RGEO_PROJ4_SUPPORTED
 
+#if PROJ_VERSION_MAJOR == 6 && PROJ_VERSION_MINOR < 3
+#define WKT_TYPE PJ_WKT2_2018
+#else
+#define WKT_TYPE PJ_WKT2_2019
+#endif
 
 typedef struct {
   PJ *pj;
@@ -234,7 +239,7 @@ static VALUE method_proj4_wkt_str(VALUE self)
   pj = data->pj;
   if (pj) {
     const char *const options[] = {"MULTILINE=NO", NULL};
-    str = proj_as_wkt(PJ_DEFAULT_CTX, pj, PJ_WKT2_2019, options);
+    str = proj_as_wkt(PJ_DEFAULT_CTX, pj, WKT_TYPE, options);
     if(str){
       result = rb_str_new2(str);
     }
