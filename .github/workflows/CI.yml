@@ -20,36 +20,6 @@ jobs:
         os:
           - ubuntu
           - macos
-    runs-on: ${{ matrix.os }}-latest
-    continue-on-error: ${{ matrix.ruby == 'head' || matrix.os == 'macos' }}
-    name: Ruby ${{ matrix.ruby }} (${{ matrix.os }})
-    steps:
-      - uses: actions/checkout@v2
-      - name: Install Packages (Linux)
-        if: matrix.os == 'ubuntu'
-        run: |
-          sudo add-apt-repository ppa:ubuntugis/ubuntugis-unstable
-          sudo apt-get install libgeos-dev libproj-dev proj-bin -y
-      - name: Install Packages (Mac)
-        if: matrix.os == 'macos'
-        run: brew install geos proj
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: ${{ matrix.ruby }}
-          bundler-cache: false
-      - name: Bundle Install
-        run: |
-          bundle install
-      - name: Test
-        run: bundle exec rake
-  BuildProj:
-    strategy:
-      fail-fast: false
-      matrix:
-        ruby:
-          - "3.0"
-        os:
-          - ubuntu
         proj:
           - "8.0.0"
           - "7.2.1"
@@ -58,31 +28,35 @@ jobs:
           - "6.3.1"
           - "6.2.1"
     runs-on: ${{ matrix.os }}-latest
-    continue-on-error: ${{ matrix.ruby == 'head' }}
-    name: Proj-(${{ matrix.proj }})
+    continue-on-error: ${{ matrix.ruby == 'head' || matrix.os == 'macos' }}
+    name: Ruby ${{ matrix.ruby }}, Proj-${{ matrix.proj }} (${{ matrix.os }})
     steps:
       - uses: actions/checkout@v2
-      - name: Download Dependencies
+      - name: Install Packages (Linux)
+        if: matrix.os == 'ubuntu'
         run: |
           sudo add-apt-repository ppa:ubuntugis/ubuntugis-unstable
           sudo apt-get install curl libcurl4-openssl-dev libssl-dev libgeos-dev
+      - name: Install Packages (Mac)
+        if: matrix.os == 'macos'
+        run: brew install geos make
       - uses: actions/cache@v2
         id: proj-cache
         with:
           path: ./proj-${{ matrix.proj }}
-          key: proj-${{ matrix.proj }}
+          key: proj-${{ matrix.proj }}-os-${{ matrix.os }}
       - name: Download and Compile Proj
         if: steps.proj-cache.outputs.cache-hit != 'true'
         run: |
           wget -c https://download.osgeo.org/proj/proj-${{ matrix.proj }}.tar.gz -O - | tar -xz
           cd proj-${{ matrix.proj }}
           ./configure --enable-shared --enable-fast-install
-          sudo su -c "make -j 8"
+          make -j 8
           cd ../
       - name: Install Proj
         run: |
           cd proj-${{ matrix.proj }}
-          sudo su -c "make install"
+          sudo make install
           cd ../
       - uses: ruby/setup-ruby@v1
         with:
