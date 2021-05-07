@@ -28,7 +28,6 @@ jobs:
           - "6.3.1"
           - "6.2.1"
     runs-on: ${{ matrix.os }}-latest
-    continue-on-error: ${{ matrix.ruby == 'head' || matrix.os == 'macos' }}
     name: Ruby ${{ matrix.ruby }}, Proj-${{ matrix.proj }} (${{ matrix.os }})
     steps:
       - uses: actions/checkout@v2
