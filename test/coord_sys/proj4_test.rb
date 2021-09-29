@@ -140,12 +140,6 @@ class TestProj4 < Minitest::Test # :nodoc:
     [x / 6_378_137.0, (2.0 * Math.atan(Math.exp(y / 6_378_137.0)) - Math::PI / 2.0)]
   end
 
-  def assert_close_enough(a, b)
-    delta = Math.sqrt(a * a + b * b) * 0.00000001
-    delta = 1e-7 if delta < 1e-7
-    assert_in_delta(a, b, delta)
-  end
-
   def assert_xy_close(xy1, xy2)
     assert_close_enough(xy1[0], xy2[0])
     assert_close_enough(xy1[1], xy2[1])
