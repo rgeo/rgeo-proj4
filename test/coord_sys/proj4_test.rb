@@ -126,7 +126,7 @@ class TestProj4 < Minitest::Test # :nodoc:
   def test_yaml_roundtrip
     obj1 = RGeo::CoordSys::Proj4.create("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +type=crs")
     dump = Psych.dump(obj1)
-    obj2 = Psych.load(dump)
+    obj2 = psych_load(dump)
     assert_equal(obj1, obj2)
   end
 
