@@ -22,6 +22,7 @@ else
       "/opt/proj/include",
       "/opt/proj4/include",
       "/opt/include",
+      "/opt/homebrew/include",
       "/Library/Frameworks/PROJ.framework/unix/include",
       "/usr/include"
     ]
@@ -36,6 +37,7 @@ else
       "/opt/proj/lib",
       "/opt/proj4/lib",
       "/opt/lib",
+      "/opt/homebrew/lib",
       "/Library/Frameworks/PROJ.framework/unix/lib",
       "/usr/lib",
       "/usr/lib64"
