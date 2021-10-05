@@ -221,14 +221,14 @@ module RGeo
         # Transforms the given coordinate (x, y, [z]) from one proj4
         # coordinate system to another. Returns an array with either two
         # or three elements.
-
         def transform_coords(from_proj_, to_proj_, x_, y_, z_ = nil)
           if from_proj_._radians? && from_proj_._geographic?
             x_ *= ImplHelper::Math::DEGREES_PER_RADIAN
             y_ *= ImplHelper::Math::DEGREES_PER_RADIAN
           end
 
-          result_ = _transform_coords(from_proj_, to_proj_, x_, y_, z_)
+          crs_to_crs = CRSStore.get(from_proj_, to_proj_)
+          result_ = crs_to_crs.transform_coords(x_, y_, z_)
           if result_ && to_proj_._radians? && to_proj_._geographic?
             result_[0] *= ImplHelper::Math::RADIANS_PER_DEGREE
             result_[1] *= ImplHelper::Math::RADIANS_PER_DEGREE
@@ -273,19 +273,8 @@ module RGeo
           from_has_m_ = from_factory_.property(:has_m_coordinate)
           to_has_z_ = to_factory_.property(:has_z_coordinate)
           to_has_m_ = to_factory_.property(:has_m_coordinate)
-          x_ = from_point_.x
-          y_ = from_point_.y
-          if from_proj_._radians? && from_proj_._geographic?
-            x_ *= ImplHelper::Math::DEGREES_PER_RADIAN
-            y_ *= ImplHelper::Math::DEGREES_PER_RADIAN
-          end
-          coords_ = _transform_coords(from_proj_, to_proj_, x_, y_, from_has_z_ ? from_point_.z : nil)
+          coords_ = transform_coords(from_proj_, to_proj_, from_point_.x, from_point_.y, from_has_z_ ? from_point_.z : nil)
           return unless coords_
-
-          if to_proj_._radians? && to_proj_._geographic?
-            coords_[0] *= ImplHelper::Math::RADIANS_PER_DEGREE
-            coords_[1] *= ImplHelper::Math::RADIANS_PER_DEGREE
-          end
           extras_ = []
           extras_ << coords_[2].to_f if to_has_z_
           if to_has_m_
