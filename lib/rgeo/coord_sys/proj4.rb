@@ -222,18 +222,8 @@ module RGeo
         # coordinate system to another. Returns an array with either two
         # or three elements.
         def transform_coords(from_proj_, to_proj_, x_, y_, z_ = nil)
-          if from_proj_._radians? && from_proj_._geographic?
-            x_ *= ImplHelper::Math::DEGREES_PER_RADIAN
-            y_ *= ImplHelper::Math::DEGREES_PER_RADIAN
-          end
-
           crs_to_crs = CRSStore.get(from_proj_, to_proj_)
-          result_ = crs_to_crs.transform_coords(x_, y_, z_)
-          if result_ && to_proj_._radians? && to_proj_._geographic?
-            result_[0] *= ImplHelper::Math::RADIANS_PER_DEGREE
-            result_[1] *= ImplHelper::Math::RADIANS_PER_DEGREE
-          end
-          result_
+          crs_to_crs.transform_coords(x_, y_, z_)
         end
 
         # Low-level geometry transform method.
@@ -241,56 +231,9 @@ module RGeo
         # The resulting geometry is constructed using the to_factory.
         # Any projections associated with the factories themselves are
         # ignored.
-
         def transform(from_proj_, from_geometry_, to_proj_, to_factory_)
-          case from_geometry_
-          when Feature::Point
-            transform_point(from_proj_, from_geometry_, to_proj_, to_factory_)
-          when Feature::Line
-            to_factory_.line(from_geometry_.points.map { |p_| transform_point(from_proj_, p_, to_proj_, to_factory_) })
-          when Feature::LinearRing
-            transform_linear_ring(from_proj_, from_geometry_, to_proj_, to_factory_)
-          when Feature::LineString
-            to_factory_.line_string(from_geometry_.points.map { |p_| transform_point(from_proj_, p_, to_proj_, to_factory_) })
-          when Feature::Polygon
-            transform_polygon(from_proj_, from_geometry_, to_proj_, to_factory_)
-          when Feature::MultiPoint
-            to_factory_.multi_point(from_geometry_.map { |p_| transform_point(from_proj_, p_, to_proj_, to_factory_) })
-          when Feature::MultiLineString
-            to_factory_.multi_line_string(from_geometry_.map { |g_| transform(from_proj_, g_, to_proj_, to_factory_) })
-          when Feature::MultiPolygon
-            to_factory_.multi_polygon(from_geometry_.map { |p_| transform_polygon(from_proj_, p_, to_proj_, to_factory_) })
-          when Feature::GeometryCollection
-            to_factory_.collection(from_geometry_.map { |g_| transform(from_proj_, g_, to_proj_, to_factory_) })
-          end
-        end
-
-        private
-
-        def transform_point(from_proj_, from_point_, to_proj_, to_factory_)
-          from_factory_ = from_point_.factory
-          from_has_z_ = from_factory_.property(:has_z_coordinate)
-          from_has_m_ = from_factory_.property(:has_m_coordinate)
-          to_has_z_ = to_factory_.property(:has_z_coordinate)
-          to_has_m_ = to_factory_.property(:has_m_coordinate)
-          coords_ = transform_coords(from_proj_, to_proj_, from_point_.x, from_point_.y, from_has_z_ ? from_point_.z : nil)
-          return unless coords_
-          extras_ = []
-          extras_ << coords_[2].to_f if to_has_z_
-          if to_has_m_
-            extras_ << from_has_m_ ? from_point_.m : 0.0
-          end
-          to_factory_.point(coords_[0], coords_[1], *extras_)
-        end
-
-        def transform_linear_ring(from_proj_, from_ring_, to_proj_, to_factory_)
-          to_factory_.linear_ring(from_ring_.points[0..-2].map { |p_| transform_point(from_proj_, p_, to_proj_, to_factory_) })
-        end
-
-        def transform_polygon(from_proj_, from_polygon_, to_proj_, to_factory_)
-          ext_ = transform_linear_ring(from_proj_, from_polygon_.exterior_ring, to_proj_, to_factory_)
-          int_ = from_polygon_.interior_rings.map { |r_| transform_linear_ring(from_proj_, r_, to_proj_, to_factory_) }
-          to_factory_.polygon(ext_, int_)
+          crs_to_crs = CRSStore.get(from_proj_, to_proj_)
+          crs_to_crs.transform(from_geometry_, to_factory_)
         end
       end
     end
