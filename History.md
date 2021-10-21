@@ -1,3 +1,7 @@
+### Unreleased
+
+* Move transform methods to `CRSToCRS` #23 (x4d3)
+
 ### 3.1.0 / 2021-10-12
 
 * Introduce `CRSToCRS` class and `CRSStore` #20 (x4d3)
