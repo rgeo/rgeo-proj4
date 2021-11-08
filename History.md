@@ -1,4 +1,4 @@
-### Unreleased
+### 3.1.1 / 2021-11-08
 
 * Move transform methods to `CRSToCRS` #23 (x4d3)
 
