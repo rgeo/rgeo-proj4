@@ -18,6 +18,29 @@ class TestCrsToCrs < Minitest::Test # :nodoc:
     assert_close_enough(b, 47.85177684510492)
   end
 
+  def test_transform_coords_invalid
+    # https://github.com/rgeo/rgeo-proj4/issues/25
+    non_crs_proj_str = "+proj=merc +lat_ts=56.5 +ellps=GRS80"
+    proj1 = RGeo::CoordSys::Proj4.create(non_crs_proj_str)
+    proj2 = RGeo::CoordSys::Proj4.create("EPSG:3857")
+
+    assert_raises(RGeo::Error::InvalidProjection) do
+      RGeo::CoordSys::Proj4.transform_coords(proj1, proj2, 1, 2, nil)
+    end
+
+    assert_raises(RGeo::Error::InvalidProjection) do
+      RGeo::CoordSys::Proj4.transform_coords(proj2, proj1, 1, 2, nil)
+    end
+
+    assert_raises(RGeo::Error::InvalidProjection) do
+      RGeo::CoordSys::CRSToCRS.create(proj1, proj2)
+    end
+
+    assert_raises(RGeo::Error::InvalidProjection) do
+      RGeo::CoordSys::CRSToCRS.create(proj2, proj1)
+    end
+  end
+
   def test_store
     crs_to_crs1 = RGeo::CoordSys::CRSStore.get(from, to)
     crs_to_crs2 = RGeo::CoordSys::CRSStore.get(from, RGeo::CoordSys::Proj4.create("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +type=crs"))

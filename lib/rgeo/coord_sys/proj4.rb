@@ -149,6 +149,12 @@ module RGeo
         _get_geographic
       end
 
+      # Returns true if this Proj4 object represents a CRS.
+
+      def crs?
+        @crs ||= _crs?
+      end
+
       class << self
         # Returns true if Proj4 is supported in this installation.
         # If this returns false, the other methods such as create
@@ -189,7 +195,7 @@ module RGeo
             end
 
             result_ = _create(defn_, opts_[:radians])
-            result_ = nil unless result_._valid?
+            raise RGeo::Error::InvalidProjection unless result_._valid?
           end
           result_
         end
