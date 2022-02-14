@@ -9,9 +9,9 @@ RGEO_BEGIN_C
 
 extern VALUE error_module;
 // Main rgeo error type
-extern VALUE rgeo_error;
+extern VALUE rb_eRGeoError;
 // RGeo::Error::InvalidProjection
-extern VALUE rgeo_invalid_projection_error;
+extern VALUE rb_eRGeoInvalidProjectionError;
 
 void rgeo_init_proj_errors();
 

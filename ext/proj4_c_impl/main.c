@@ -39,7 +39,7 @@ typedef struct {
 static void rgeo_proj4_free(void *ptr)
 {
   RGeo_Proj4Data *data = (RGeo_Proj4Data *)ptr;
-  if(data->pj){
+  if (data->pj){
     proj_destroy(data->pj);
   }
   free(data);
@@ -49,7 +49,7 @@ static void rgeo_proj4_free(void *ptr)
 static void rgeo_crs_to_crs_free(void *ptr)
 {
   RGeo_CRSToCRSData *data = (RGeo_CRSToCRSData *)ptr;
-  if(data->crs_to_crs){
+  if (data->crs_to_crs){
     proj_destroy(data->crs_to_crs);
   }
   free(data);
@@ -62,7 +62,7 @@ static size_t rgeo_proj4_memsize(const void *ptr)
   const RGeo_Proj4Data *data = (const RGeo_Proj4Data *)ptr;
 
   size += sizeof(*data);
-  if(data->pj){
+  if (data->pj){
     size += sizeof(data->pj);
   }
   return size;
@@ -73,7 +73,7 @@ static size_t rgeo_crs_to_crs_memsize(const void *ptr)
   size_t size = 0;
   const RGeo_CRSToCRSData *data = (const RGeo_CRSToCRSData *)ptr;
   size += sizeof(*data);
-  if(data->crs_to_crs){
+  if (data->crs_to_crs){
     size += sizeof(data->crs_to_crs);
   }
   return size;
@@ -82,7 +82,7 @@ static size_t rgeo_crs_to_crs_memsize(const void *ptr)
 static void rgeo_proj4_mark(void *ptr)
 {
   RGeo_Proj4Data *data = (RGeo_Proj4Data *)ptr;
-  if(!NIL_P(data->original_str)){
+  if (!NIL_P(data->original_str)){
     mark(data->original_str);
   }
 }
@@ -91,7 +91,7 @@ static void rgeo_proj4_mark(void *ptr)
 static void rgeo_proj4_compact(void *ptr)
 {
   RGeo_Proj4Data *data = (RGeo_Proj4Data *)ptr;
-  if(data && !NIL_P(data->original_str)){
+  if (data && !NIL_P(data->original_str)){
     data->original_str = rb_gc_location(data->original_str);
   }
 }
@@ -99,7 +99,7 @@ static void rgeo_proj4_compact(void *ptr)
 
 static void rgeo_proj4_clear_struct(RGeo_Proj4Data *data)
 {
-  if(data->pj){
+  if (data->pj){
     proj_destroy(data->pj);
     data->pj = NULL;
     data->original_str = Qnil;
@@ -129,7 +129,7 @@ static VALUE rgeo_proj4_data_alloc(VALUE self)
 
   result = Qnil;
 
-  if(data){
+  if (data){
     data->pj = NULL;
     data->original_str = Qnil;
     data->uses_radians = 0;
@@ -146,7 +146,7 @@ static VALUE rgeo_crs_to_crs_data_alloc(VALUE self)
 
   result = Qnil;
 
-  if(data){
+  if (data){
     data->crs_to_crs = NULL;
     result = TypedData_Wrap_Struct(self, &rgeo_crs_to_crs_data_type, data);
   }
@@ -211,9 +211,9 @@ static VALUE method_proj4_get_geographic(VALUE self)
     TypedData_Get_Struct(self, RGeo_Proj4Data, &rgeo_proj4_data_type, self_data);
 
     geographic_proj = proj_crs_get_geodetic_crs(PJ_DEFAULT_CTX, self_data->pj);
-    if(geographic_proj == 0) {
+    if (geographic_proj == 0) {
       xfree(new_data);
-      rb_raise(rgeo_invalid_projection_error, "Geographic CRS could not be created because the source projection is not a CRS");
+      rb_raise(rb_eRGeoInvalidProjectionError, "Geographic CRS could not be created because the source projection is not a CRS");
     }
 
     new_data->pj = geographic_proj;
@@ -273,7 +273,7 @@ static VALUE method_proj4_wkt_str(VALUE self)
   if (pj) {
     const char *const options[] = {"MULTILINE=NO", NULL};
     str = proj_as_wkt(PJ_DEFAULT_CTX, pj, WKT_TYPE, options);
-    if(str){
+    if (str){
       result = rb_str_new2(str);
     }
   }
@@ -294,7 +294,7 @@ static VALUE method_proj4_auth_name_str(VALUE self)
   if (pj) {
     auth = proj_get_id_auth_name(pj, 0);
     id = proj_get_id_code(pj, 0);
-    if(id && auth){
+    if (id && auth){
       result = rb_sprintf("%s:%s", auth, id);
     }
   }
@@ -313,7 +313,7 @@ static VALUE method_proj4_is_geographic(VALUE self)
   pj = data->pj;
   if (pj) {
     proj_type = proj_get_type(pj);
-    if(proj_type == PJ_TYPE_GEOGRAPHIC_2D_CRS || proj_type == PJ_TYPE_GEOGRAPHIC_3D_CRS){
+    if (proj_type == PJ_TYPE_GEOGRAPHIC_2D_CRS || proj_type == PJ_TYPE_GEOGRAPHIC_3D_CRS){
       result = Qtrue;
     } else {
       result = Qfalse;
@@ -351,27 +351,9 @@ static VALUE method_proj4_is_valid(VALUE self)
 static VALUE method_proj4_is_crs(VALUE self)
 {
   RGeo_Proj4Data *self_data;
-  int i;
-  int proj_type;
-  int valid_types[] = {
-    PJ_TYPE_CRS, PJ_TYPE_GEODETIC_CRS, PJ_TYPE_GEOCENTRIC_CRS, PJ_TYPE_GEOGRAPHIC_CRS,
-    PJ_TYPE_GEOGRAPHIC_2D_CRS, PJ_TYPE_GEOGRAPHIC_3D_CRS, PJ_TYPE_VERTICAL_CRS,
-    PJ_TYPE_PROJECTED_CRS, PJ_TYPE_COMPOUND_CRS, PJ_TYPE_TEMPORAL_CRS,
-    PJ_TYPE_ENGINEERING_CRS, PJ_TYPE_BOUND_CRS, PJ_TYPE_OTHER_CRS
-  };
-  int valid_types_size = 13;
 
   TypedData_Get_Struct(self, RGeo_Proj4Data, &rgeo_proj4_data_type, self_data);
-  if (self_data->pj){
-    proj_type = proj_get_type(self_data->pj);
-    for (i = 0; i < valid_types_size; i++) {
-      if(valid_types[i] == proj_type) {
-        return Qtrue;
-      }
-    }
-  }
-
-  return Qfalse;
+  return proj_is_crs(self_data->pj) ? Qtrue : Qfalse;
 }
 
 
@@ -417,14 +399,14 @@ static VALUE cmethod_crs_to_crs_create(VALUE klass, VALUE from, VALUE to)
 
   // check for invalid transformation
   if (crs_to_crs == 0) {
-    rb_raise(rgeo_invalid_projection_error, "CRSToCRS could not be created from input projections");
+    rb_raise(rb_eRGeoInvalidProjectionError, "CRSToCRS could not be created from input projections");
   }
 
   // necessary to use proj_normalize_for_visualization so that we
   // do not have to worry about the order of coordinates in every
   // coord system
   gis_pj = proj_normalize_for_visualization(PJ_DEFAULT_CTX, crs_to_crs);
-  if(gis_pj){
+  if (gis_pj){
     proj_destroy(crs_to_crs);
     crs_to_crs = gis_pj;
   }
@@ -449,7 +431,7 @@ static VALUE method_crs_to_crs_transform(VALUE self, VALUE x, VALUE y, VALUE z)
   result = Qnil;
   TypedData_Get_Struct(self, RGeo_CRSToCRSData, &rgeo_crs_to_crs_data_type, crs_to_crs_data);
   crs_to_crs_pj = crs_to_crs_data->crs_to_crs;
-  if(crs_to_crs_pj){
+  if (crs_to_crs_pj){
     xval = rb_num2dbl(x);
     yval = rb_num2dbl(y);
     zval = NIL_P(z) ? 0.0 : rb_num2dbl(z);
@@ -460,7 +442,7 @@ static VALUE method_crs_to_crs_transform(VALUE self, VALUE x, VALUE y, VALUE z)
     result = rb_ary_new2(NIL_P(z) ? 2 : 3);
     rb_ary_push(result, DBL2NUM(output.xyz.x));
     rb_ary_push(result, DBL2NUM(output.xyz.y));
-    if(!NIL_P(z)){
+    if (!NIL_P(z)){
       rb_ary_push(result, DBL2NUM(output.xyz.z));
     }
   }

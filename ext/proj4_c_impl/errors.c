@@ -12,16 +12,16 @@
 RGEO_BEGIN_C
 
 VALUE error_module;
-VALUE rgeo_error;
-VALUE rgeo_invalid_projection_error;
+VALUE rb_eRGeoError;
+VALUE rb_eRGeoInvalidProjectionError;
 
 void rgeo_init_proj_errors() {
   VALUE rgeo_module;
 
   rgeo_module = rb_define_module("RGeo");
   error_module = rb_define_module_under(rgeo_module, "Error");
-  rgeo_error = rb_define_class_under(error_module, "RGeoError", rb_eRuntimeError);
-  rgeo_invalid_projection_error = rb_define_class_under(error_module, "InvalidProjection", rgeo_error);
+  rb_eRGeoError = rb_define_class_under(error_module, "RGeoError", rb_eRuntimeError);
+  rb_eRGeoInvalidProjectionError = rb_define_class_under(error_module, "InvalidProjection", rb_eRGeoError);
 }
 
 RGEO_END_C
