@@ -152,7 +152,7 @@ module RGeo
       # Returns true if this Proj4 object represents a CRS.
 
       def crs?
-        @crs ||= _crs?
+        _crs?
       end
 
       class << self
