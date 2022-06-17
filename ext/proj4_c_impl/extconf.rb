@@ -12,9 +12,12 @@ else
 
   require "mkmf"
 
-  header_dirs_ =
-    [
-      ::RbConfig::CONFIG["includedir"],
+  with_default_header_paths = with_config("default-header-paths", default = true)
+  with_default_lib_paths = with_config("default-lib-paths", default = true)
+
+  header_dirs_ = [ ::RbConfig::CONFIG["includedir"] ]
+  if with_default_header_paths
+    header_dirs_.push(
       "/usr/local/include",
       "/usr/local/proj/include",
       "/usr/local/proj4/include",
@@ -24,10 +27,12 @@ else
       "/opt/include",
       "/Library/Frameworks/PROJ.framework/unix/include",
       "/usr/include"
-    ]
-  lib_dirs_ =
-    [
-      ::RbConfig::CONFIG["libdir"],
+    )
+  end
+
+  lib_dirs_ = [ ::RbConfig::CONFIG["libdir"] ]
+  if with_default_lib_paths
+    lib_dirs_.push(
       "/usr/local/lib",
       "/usr/local/lib64",
       "/usr/local/proj/lib",
@@ -39,7 +44,9 @@ else
       "/Library/Frameworks/PROJ.framework/unix/lib",
       "/usr/lib",
       "/usr/lib64"
-    ]
+    )
+  end
+
   header_dirs_.delete_if { |path_| !::File.directory?(path_) }
   lib_dirs_.delete_if { |path_| !::File.directory?(path_) }
 
