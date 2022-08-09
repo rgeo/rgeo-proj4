@@ -15,6 +15,24 @@ class TestProj4 < Minitest::Test # :nodoc:
     assert_equal("+proj=longlat +datum=WGS84 +no_defs +type=crs", proj.canonical_str)
   end
 
+  def test_valid
+    assert_raises(RGeo::Error::InvalidProjection) do
+      RGeo::CoordSys::Proj4.create("")
+    end
+
+    # will not raise for a valid projection, even though it is not a CRS
+    proj = RGeo::CoordSys::Proj4.create("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+    assert(proj._valid?)
+  end
+
+  def test_is_crs
+    crs_proj = RGeo::CoordSys::Proj4.create("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +type=crs")
+    non_crs_proj = RGeo::CoordSys::Proj4.create("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+
+    assert(crs_proj.crs?)
+    refute(non_crs_proj.crs?)
+  end
+
   def test_as_text
     proj = RGeo::CoordSys::Proj4.create("EPSG:3857")
     assert_equal(true, proj.as_text.include?("ID[\"EPSG\",3857]]"))
@@ -101,6 +119,13 @@ class TestProj4 < Minitest::Test # :nodoc:
     geographic = projection.get_geographic
     expected = RGeo::CoordSys::Proj4.create("+proj=longlat +datum=WGS84 +no_defs +type=crs")
     assert_equal(expected, geographic)
+  end
+
+  def test_get_geographic_invalid_crs
+    projection = RGeo::CoordSys::Proj4.create("+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs")
+    assert_raises(RGeo::Error::InvalidProjection) do
+      projection.get_geographic
+    end
   end
 
   def test_marshal_roundtrip

@@ -1,35 +1,14 @@
 /*
   Main initializer for Proj4 wrapper
 */
-#ifdef HAVE_PROJ_H
-#ifdef HAVE_PROJ_CREATE
-#ifdef HAVE_PROJ_CREATE_CRS_TO_CRS_FROM_PJ
-#ifdef HAVE_PROJ_NORMALIZE_FOR_VISUALIZATION
-#define RGEO_PROJ4_SUPPORTED
-#endif
-#endif
-#endif
-#endif
 
-#ifdef HAVE_RB_GC_MARK_MOVABLE
-#define mark rb_gc_mark_movable
-#else
-#define mark rb_gc_mark
-#endif
-
-#ifdef __cplusplus
-#define RGEO_BEGIN_C extern "C" {
-#define RGEO_END_C }
-#else
-#define RGEO_BEGIN_C
-#define RGEO_END_C
-#endif
-
+#include "preface.h"
 
 #ifdef RGEO_PROJ4_SUPPORTED
 
 #include <ruby.h>
 #include <proj.h>
+#include "errors.h"
 
 #endif
 
@@ -60,7 +39,7 @@ typedef struct {
 static void rgeo_proj4_free(void *ptr)
 {
   RGeo_Proj4Data *data = (RGeo_Proj4Data *)ptr;
-  if(data->pj){
+  if (data->pj){
     proj_destroy(data->pj);
   }
   free(data);
@@ -70,7 +49,7 @@ static void rgeo_proj4_free(void *ptr)
 static void rgeo_crs_to_crs_free(void *ptr)
 {
   RGeo_CRSToCRSData *data = (RGeo_CRSToCRSData *)ptr;
-  if(data->crs_to_crs){
+  if (data->crs_to_crs){
     proj_destroy(data->crs_to_crs);
   }
   free(data);
@@ -83,7 +62,7 @@ static size_t rgeo_proj4_memsize(const void *ptr)
   const RGeo_Proj4Data *data = (const RGeo_Proj4Data *)ptr;
 
   size += sizeof(*data);
-  if(data->pj){
+  if (data->pj){
     size += sizeof(data->pj);
   }
   return size;
@@ -94,7 +73,7 @@ static size_t rgeo_crs_to_crs_memsize(const void *ptr)
   size_t size = 0;
   const RGeo_CRSToCRSData *data = (const RGeo_CRSToCRSData *)ptr;
   size += sizeof(*data);
-  if(data->crs_to_crs){
+  if (data->crs_to_crs){
     size += sizeof(data->crs_to_crs);
   }
   return size;
@@ -103,7 +82,7 @@ static size_t rgeo_crs_to_crs_memsize(const void *ptr)
 static void rgeo_proj4_mark(void *ptr)
 {
   RGeo_Proj4Data *data = (RGeo_Proj4Data *)ptr;
-  if(!NIL_P(data->original_str)){
+  if (!NIL_P(data->original_str)){
     mark(data->original_str);
   }
 }
@@ -112,7 +91,7 @@ static void rgeo_proj4_mark(void *ptr)
 static void rgeo_proj4_compact(void *ptr)
 {
   RGeo_Proj4Data *data = (RGeo_Proj4Data *)ptr;
-  if(data && !NIL_P(data->original_str)){
+  if (data && !NIL_P(data->original_str)){
     data->original_str = rb_gc_location(data->original_str);
   }
 }
@@ -120,7 +99,7 @@ static void rgeo_proj4_compact(void *ptr)
 
 static void rgeo_proj4_clear_struct(RGeo_Proj4Data *data)
 {
-  if(data->pj){
+  if (data->pj){
     proj_destroy(data->pj);
     data->pj = NULL;
     data->original_str = Qnil;
@@ -150,7 +129,7 @@ static VALUE rgeo_proj4_data_alloc(VALUE self)
 
   result = Qnil;
 
-  if(data){
+  if (data){
     data->pj = NULL;
     data->original_str = Qnil;
     data->uses_radians = 0;
@@ -167,7 +146,7 @@ static VALUE rgeo_crs_to_crs_data_alloc(VALUE self)
 
   result = Qnil;
 
-  if(data){
+  if (data){
     data->crs_to_crs = NULL;
     result = TypedData_Wrap_Struct(self, &rgeo_crs_to_crs_data_type, data);
   }
@@ -224,13 +203,20 @@ static VALUE method_proj4_get_geographic(VALUE self)
   VALUE result;
   RGeo_Proj4Data *new_data;
   RGeo_Proj4Data *self_data;
+  PJ *geographic_proj;
 
   result = Qnil;
   new_data = ALLOC(RGeo_Proj4Data);
   if (new_data) {
     TypedData_Get_Struct(self, RGeo_Proj4Data, &rgeo_proj4_data_type, self_data);
 
-    new_data->pj = proj_crs_get_geodetic_crs(PJ_DEFAULT_CTX, self_data->pj);
+    geographic_proj = proj_crs_get_geodetic_crs(PJ_DEFAULT_CTX, self_data->pj);
+    if (geographic_proj == 0) {
+      xfree(new_data);
+      rb_raise(rb_eRGeoInvalidProjectionError, "Geographic CRS could not be created because the source projection is not a CRS");
+    }
+
+    new_data->pj = geographic_proj;
     new_data->original_str = Qnil;
     new_data->uses_radians = self_data->uses_radians;
     result = TypedData_Wrap_Struct(CLASS_OF(self), &rgeo_proj4_data_type, new_data);
@@ -287,7 +273,7 @@ static VALUE method_proj4_wkt_str(VALUE self)
   if (pj) {
     const char *const options[] = {"MULTILINE=NO", NULL};
     str = proj_as_wkt(PJ_DEFAULT_CTX, pj, WKT_TYPE, options);
-    if(str){
+    if (str){
       result = rb_str_new2(str);
     }
   }
@@ -308,7 +294,7 @@ static VALUE method_proj4_auth_name_str(VALUE self)
   if (pj) {
     auth = proj_get_id_auth_name(pj, 0);
     id = proj_get_id_code(pj, 0);
-    if(id && auth){
+    if (id && auth){
       result = rb_sprintf("%s:%s", auth, id);
     }
   }
@@ -327,7 +313,7 @@ static VALUE method_proj4_is_geographic(VALUE self)
   pj = data->pj;
   if (pj) {
     proj_type = proj_get_type(pj);
-    if(proj_type == PJ_TYPE_GEOGRAPHIC_2D_CRS || proj_type == PJ_TYPE_GEOGRAPHIC_3D_CRS){
+    if (proj_type == PJ_TYPE_GEOGRAPHIC_2D_CRS || proj_type == PJ_TYPE_GEOGRAPHIC_3D_CRS){
       result = Qtrue;
     } else {
       result = Qfalse;
@@ -360,6 +346,14 @@ static VALUE method_proj4_is_valid(VALUE self)
   RGeo_Proj4Data *data;
   TypedData_Get_Struct(self, RGeo_Proj4Data, &rgeo_proj4_data_type, data);
   return data->pj ? Qtrue : Qfalse;
+}
+
+static VALUE method_proj4_is_crs(VALUE self)
+{
+  RGeo_Proj4Data *self_data;
+
+  TypedData_Get_Struct(self, RGeo_Proj4Data, &rgeo_proj4_data_type, self_data);
+  return proj_is_crs(self_data->pj) ? Qtrue : Qfalse;
 }
 
 
@@ -403,11 +397,16 @@ static VALUE cmethod_crs_to_crs_create(VALUE klass, VALUE from, VALUE to)
   to_pj = to_data->pj;
   crs_to_crs = proj_create_crs_to_crs_from_pj(PJ_DEFAULT_CTX, from_pj, to_pj, 0, NULL);
 
+  // check for invalid transformation
+  if (crs_to_crs == 0) {
+    rb_raise(rb_eRGeoInvalidProjectionError, "CRSToCRS could not be created from input projections");
+  }
+
   // necessary to use proj_normalize_for_visualization so that we
   // do not have to worry about the order of coordinates in every
   // coord system
   gis_pj = proj_normalize_for_visualization(PJ_DEFAULT_CTX, crs_to_crs);
-  if(gis_pj){
+  if (gis_pj){
     proj_destroy(crs_to_crs);
     crs_to_crs = gis_pj;
   }
@@ -432,7 +431,7 @@ static VALUE method_crs_to_crs_transform(VALUE self, VALUE x, VALUE y, VALUE z)
   result = Qnil;
   TypedData_Get_Struct(self, RGeo_CRSToCRSData, &rgeo_crs_to_crs_data_type, crs_to_crs_data);
   crs_to_crs_pj = crs_to_crs_data->crs_to_crs;
-  if(crs_to_crs_pj){
+  if (crs_to_crs_pj){
     xval = rb_num2dbl(x);
     yval = rb_num2dbl(y);
     zval = NIL_P(z) ? 0.0 : rb_num2dbl(z);
@@ -443,7 +442,7 @@ static VALUE method_crs_to_crs_transform(VALUE self, VALUE x, VALUE y, VALUE z)
     result = rb_ary_new2(NIL_P(z) ? 2 : 3);
     rb_ary_push(result, DBL2NUM(output.xyz.x));
     rb_ary_push(result, DBL2NUM(output.xyz.y));
-    if(!NIL_P(z)){
+    if (!NIL_P(z)){
       rb_ary_push(result, DBL2NUM(output.xyz.z));
     }
   }
@@ -474,6 +473,7 @@ static void rgeo_init_proj4()
   rb_define_method(proj4_class, "_geocentric?", method_proj4_is_geocentric, 0);
   rb_define_method(proj4_class, "_radians?", method_proj4_uses_radians, 0);
   rb_define_method(proj4_class, "_get_geographic", method_proj4_get_geographic, 0);
+  rb_define_method(proj4_class, "_crs?", method_proj4_is_crs, 0);
   rb_define_module_function(proj4_class, "_proj_version", cmethod_proj4_version, 0);
 
 
@@ -491,6 +491,7 @@ void Init_proj4_c_impl()
 {
 #ifdef RGEO_PROJ4_SUPPORTED
   rgeo_init_proj4();
+  rgeo_init_proj_errors();
 #endif
 }
 
