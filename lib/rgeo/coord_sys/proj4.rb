@@ -246,7 +246,7 @@ module RGeo
         # or three elements.
         def transform(from_proj, to_proj, x, y, z = nil)
           crs_to_crs = CRSStore.get(from_proj, to_proj)
-          crs_to_crs.transform_coords(x, y, z)
+          crs_to_crs.transform(x, y, z)
         end
         alias transform_coords transform
 
@@ -257,7 +257,7 @@ module RGeo
         # ignored.
         def transform_geometry(from_proj, from_geometry, to_proj, to_factory)
           crs_to_crs = CRSStore.get(from_proj, to_proj)
-          crs_to_crs.transform(from_geometry, to_factory)
+          crs_to_crs.transform_geometry(from_geometry, to_factory)
         end
       end
     end

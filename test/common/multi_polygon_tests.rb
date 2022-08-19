@@ -57,17 +57,16 @@ module RGeo
         end
 
         def test_creation_overlapping
-          assert_raises(RGeo::Error::InvalidGeometry) do
-            @factory.multi_polygon([@poly1, @poly1])
-          end
+          invalid_poly = @factory.multi_polygon([@poly1, @poly1])
+          refute(invalid_poly.valid?)
+
           geom = @lenient_factory.multi_polygon([@poly1, @poly1])
           assert_equal RGeo::Feature::MultiPolygon, geom.geometry_type
         end
 
         def test_creation_connected
-          assert_raises(RGeo::Error::InvalidGeometry) do
-            @factory.multi_polygon([@poly3, @poly4])
-          end
+          invalid_poly = @factory.multi_polygon([@poly3, @poly4])
+          refute(invalid_poly.valid?)
           geom = @lenient_factory.multi_polygon([@poly3, @poly4])
           assert_equal RGeo::Feature::MultiPolygon, geom.geometry_type
         end

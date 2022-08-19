@@ -322,6 +322,8 @@ static VALUE method_proj4_axis_and_unit_info_str(VALUE self, VALUE dimension)
     pj_cs = proj_crs_get_coordinate_system(PJ_DEFAULT_CTX, pj);
     if(pj_cs && proj_cs_get_axis_info(PJ_DEFAULT_CTX, pj_cs, dimension_index, &axis_info, NULL, NULL, NULL, &unit_name, NULL, NULL)) {
       result = rb_sprintf("%s:%s", axis_info, unit_name);
+
+      proj_destroy(pj_cs);
     }
   }
   return result;
@@ -343,6 +345,8 @@ static VALUE method_proj4_axis_count(VALUE self)
     if(pj_cs) {
       count = proj_cs_get_axis_count(PJ_DEFAULT_CTX, pj_cs);
       result = INT2FIX(count);
+
+      proj_destroy(pj_cs);
     }
   }
   return result;
@@ -517,7 +521,65 @@ static VALUE method_crs_to_crs_wkt_str(VALUE self)
   return result;
 }
 
+static VALUE method_crs_to_crs_area_of_use_str(VALUE self)
+{
+  VALUE result;
+  RGeo_CRSToCRSData *crs_to_crs_data;
+  PJ *crs_to_crs_pj;
+  const char *str;
 
+  result = Qnil;
+  TypedData_Get_Struct(self, RGeo_CRSToCRSData, &rgeo_crs_to_crs_data_type, crs_to_crs_data);
+  crs_to_crs_pj = crs_to_crs_data->crs_to_crs;
+  if (crs_to_crs_pj) {
+    if(proj_get_area_of_use(PJ_DEFAULT_CTX, crs_to_crs_pj, NULL, NULL, NULL, NULL, &str)){
+      result = rb_str_new2(str);
+    }
+  }
+  return result;
+}
+
+static VALUE method_crs_to_crs_proj_type(VALUE self)
+{
+  VALUE result;
+  RGeo_CRSToCRSData *crs_to_crs_data;
+  PJ *crs_to_crs_pj;
+  int proj_type;
+
+  result = Qnil;
+  TypedData_Get_Struct(self, RGeo_CRSToCRSData, &rgeo_crs_to_crs_data_type, crs_to_crs_data);
+  crs_to_crs_pj = crs_to_crs_data->crs_to_crs;
+  if (crs_to_crs_pj) {
+    proj_type = proj_get_type(crs_to_crs_pj);
+    result = INT2FIX(proj_type);
+  }
+  return result;
+}
+
+static VALUE method_crs_to_crs_identity(VALUE self, VALUE from, VALUE to)
+{
+  VALUE result;
+  RGeo_Proj4Data *from_data;
+  RGeo_Proj4Data *to_data;
+  result = Qnil;
+  PJ *from_pj;
+  PJ *to_pj;
+
+  result = Qfalse;
+
+  TypedData_Get_Struct(from, RGeo_Proj4Data, &rgeo_proj4_data_type, from_data);
+  TypedData_Get_Struct(to, RGeo_Proj4Data, &rgeo_proj4_data_type, to_data);
+  from_pj = from_data->pj;
+  to_pj = to_data->pj;
+
+  if(from_pj && to_pj){
+    if(proj_is_equivalent_to_with_ctx(PJ_DEFAULT_CTX, from_pj, to_pj, PJ_COMP_EQUIVALENT)){
+      result = Qtrue;
+    }
+  }
+
+  return result;
+}
 
 static void rgeo_init_proj4()
 {
@@ -564,6 +626,9 @@ static void rgeo_init_proj4()
   rb_define_module_function(crs_to_crs_class, "_create", cmethod_crs_to_crs_create, 2);
   rb_define_method(crs_to_crs_class, "_transform_coords", method_crs_to_crs_transform, 3);
   rb_define_method(crs_to_crs_class, "_as_text", method_crs_to_crs_wkt_str, 0);
+  rb_define_method(crs_to_crs_class, "_proj_type", method_crs_to_crs_proj_type, 0);
+  rb_define_method(crs_to_crs_class, "_area_of_use", method_crs_to_crs_area_of_use_str, 0);
+  rb_define_method(crs_to_crs_class, "_identity?", method_crs_to_crs_identity, 2);
 }
 
 
