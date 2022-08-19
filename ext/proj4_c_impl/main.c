@@ -449,17 +449,48 @@ static VALUE method_crs_to_crs_transform(VALUE self, VALUE x, VALUE y, VALUE z)
   return result;
 }
 
+static VALUE method_crs_to_crs_wkt_str(VALUE self)
+{
+  VALUE result;
+  RGeo_CRSToCRSData *crs_to_crs_data;
+  PJ *crs_to_crs_pj;
+  const char *str;
+
+  result = Qnil;
+  TypedData_Get_Struct(self, RGeo_CRSToCRSData, &rgeo_crs_to_crs_data_type, crs_to_crs_data);
+  crs_to_crs_pj = crs_to_crs_data->crs_to_crs;
+  if (crs_to_crs_pj) {
+    const char *const options[] = {"MULTILINE=NO", NULL};
+    str = proj_as_wkt(PJ_DEFAULT_CTX, crs_to_crs_pj, WKT_TYPE, options);
+    if (str){
+      result = rb_str_new2(str);
+    }
+  }
+  return result;
+}
+
+
+
 static void rgeo_init_proj4()
 {
   VALUE rgeo_module;
   VALUE coordsys_module;
+  VALUE cs_module;
   VALUE proj4_class;
   VALUE crs_to_crs_class;
+  VALUE cs_base_class;
+  VALUE cs_info_class;
+  VALUE coordinate_system_class;
+  VALUE coordinate_transform_class;
 
   rgeo_module = rb_define_module("RGeo");
   coordsys_module = rb_define_module_under(rgeo_module, "CoordSys");
+  cs_module = rb_define_module_under(coordsys_module, "CS");
+  cs_base_class = rb_define_class_under(cs_module, "Base", rb_cObject);
+  cs_info_class = rb_define_class_under(cs_module, "Info", cs_base_class);
 
-  proj4_class = rb_define_class_under(coordsys_module, "Proj4", rb_cObject);
+  coordinate_system_class = rb_define_class_under(cs_module, "CoordinateSystem", cs_info_class);
+  proj4_class = rb_define_class_under(coordsys_module, "Proj4", coordinate_system_class);
   rb_define_alloc_func(proj4_class, rgeo_proj4_data_alloc);
   rb_define_module_function(proj4_class, "_create", cmethod_proj4_create, 2);
   rb_define_method(proj4_class, "initialize_copy", method_proj4_initialize_copy, 1);
@@ -476,11 +507,13 @@ static void rgeo_init_proj4()
   rb_define_method(proj4_class, "_crs?", method_proj4_is_crs, 0);
   rb_define_module_function(proj4_class, "_proj_version", cmethod_proj4_version, 0);
 
+  coordinate_transform_class = rb_define_class_under(cs_module, "CoordinateTransform", cs_info_class);
 
-  crs_to_crs_class = rb_define_class_under(coordsys_module, "CRSToCRS", rb_cObject);
+  crs_to_crs_class = rb_define_class_under(coordsys_module, "CRSToCRS", coordinate_transform_class);
   rb_define_alloc_func(crs_to_crs_class, rgeo_crs_to_crs_data_alloc);
   rb_define_module_function(crs_to_crs_class, "_create", cmethod_crs_to_crs_create, 2);
   rb_define_method(crs_to_crs_class, "_transform_coords", method_crs_to_crs_transform, 3);
+  rb_define_method(crs_to_crs_class, "_as_text", method_crs_to_crs_wkt_str, 0);
 }
 
 

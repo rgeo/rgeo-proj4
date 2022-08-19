@@ -19,7 +19,7 @@ module RGeo
     # option. You may also use this object directly to perform low-level
     # coordinate transformations.
 
-    class Proj4
+    class Proj4 < CS::CoordinateSystem
       def inspect # :nodoc:
         "#<#{self.class}:0x#{object_id.to_s(16)} #{canonical_str.inspect}>"
       end
@@ -110,6 +110,7 @@ module RGeo
       def as_text
         _as_text
       end
+      alias to_wkt as_text
 
       # Returns the string representing the authority and code of the
       # CRS if it exists, nil otherwise.

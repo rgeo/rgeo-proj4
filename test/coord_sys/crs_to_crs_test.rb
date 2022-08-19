@@ -11,6 +11,17 @@ class TestCrsToCrs < Minitest::Test # :nodoc:
     RGeo::CoordSys::Proj4.create("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +type=crs")
   end
 
+  def test_inheritance
+    crs_to_crs = RGeo::CoordSys::CRSToCRS.create(from, to)
+    assert(crs_to_crs.is_a?(RGeo::CoordSys::CRSToCRS))
+    assert(crs_to_crs.is_a?(RGeo::CoordSys::CS::CoordinateTransform))
+  end
+
+  def test_to_wkt
+    crs_to_crs = RGeo::CoordSys::CRSToCRS.create(from, to)
+    assert(crs_to_crs.to_wkt.include?("CONCATENATEDOPERATION"))
+  end
+
   def test_transform_coords
     crs_to_crs = RGeo::CoordSys::CRSToCRS.create(from, to)
     a, b = crs_to_crs.transform_coords(733_345.6496818807, 6_750_247.713332973, nil)

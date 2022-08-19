@@ -8,6 +8,12 @@ class TestProj4 < Minitest::Test # :nodoc:
     # assert_match(/^\d+\.\d+(\.\d+)?$/, RGeo::CoordSys::Proj4.version)
   end
 
+  def test_inheritance
+    proj = RGeo::CoordSys::Proj4.create("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +type=crs")
+    assert(proj.is_a?(RGeo::CoordSys::Proj4))
+    assert(proj.is_a?(RGeo::CoordSys::CS::CoordinateSystem))
+  end
+
   def test_create_wgs84
     proj = RGeo::CoordSys::Proj4.create("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +type=crs")
     assert_equal(true, proj.geographic?)
