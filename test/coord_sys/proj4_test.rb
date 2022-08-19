@@ -26,6 +26,11 @@ class TestProj4 < Minitest::Test # :nodoc:
       RGeo::CoordSys::Proj4.create("")
     end
 
+    def test_dimension_assigned_on_create
+      proj = RGeo::CoordSys::Proj4.create("EPSG:3857")
+      assert_equal(2, proj.dimension)
+    end
+
     # will not raise for a valid projection, even though it is not a CRS
     proj = RGeo::CoordSys::Proj4.create("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
     assert(proj._valid?)
@@ -56,6 +61,16 @@ class TestProj4 < Minitest::Test # :nodoc:
 
     proj = RGeo::CoordSys::Proj4.create("+proj=longlat +ellps=WGS84 +datum=WGS84 +lat_ts=5.0 +no_defs +type=crs")
     assert_nil(proj.auth_name)
+  end
+
+  def test_get_axis
+    proj = RGeo::CoordSys::Proj4.create("EPSG:3857")
+    assert_equal("Easting", proj.get_axis(0))
+  end
+
+  def test_get_units
+    proj = RGeo::CoordSys::Proj4.create("EPSG:3857")
+    assert_equal("metre", proj.get_units(0))
   end
 
   def test_get_wgs84_geographic
@@ -110,7 +125,7 @@ class TestProj4 < Minitest::Test # :nodoc:
     geography = RGeo::Geos.factory(proj4: "EPSG:4326", srid: 4326)
     projection = RGeo::Geos.factory(proj4: "EPSG:27700", srid: 27_700)
     proj_point = projection.parse_wkt("POINT(473600.5000000000000000 186659.7999999999883585)")
-    geo_point = RGeo::CoordSys::Proj4.transform(projection.proj4, proj_point, geography.proj4, geography)
+    geo_point = RGeo::CoordSys::Proj4.transform_geometry(projection.proj4, proj_point, geography.proj4, geography)
     assert_close_enough(-0.9393598527244420, geo_point.x)
     assert_close_enough(51.5740106527552697, geo_point.y)
   end
@@ -179,7 +194,7 @@ class TestProj4 < Minitest::Test # :nodoc:
     to_factory = RGeo::Cartesian.factory(srid: 4326, proj4: to_proj)
 
     from_geom = from_factory.parse_wkt(from_wkt)
-    to_geom = RGeo::CoordSys::Proj4.transform(from_proj, from_geom, to_proj, to_factory)
+    to_geom = RGeo::CoordSys::Proj4.transform_geometry(from_proj, from_geom, to_proj, to_factory)
     expected_geom = to_factory.parse_wkt(expected_wkt)
 
     to_geom.coordinates.zip(expected_geom.coordinates).each do |p1, p2|

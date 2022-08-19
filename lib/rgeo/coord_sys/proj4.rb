@@ -20,6 +20,8 @@ module RGeo
     # coordinate transformations.
 
     class Proj4 < CS::CoordinateSystem
+      attr_accessor :dimension
+
       def inspect # :nodoc:
         "#<#{self.class}:0x#{object_id.to_s(16)} #{canonical_str.inspect}>"
       end
@@ -121,6 +123,18 @@ module RGeo
         _auth_name
       end
 
+      # Gets axis details for dimension within coordinate system. Each
+      # dimension in the coordinate system has a corresponding axis.
+      def get_axis(dimension)
+        _axis_and_unit_info(dimension).split(":")[0]
+      end
+
+      # Gets units for dimension within coordinate system. Each
+      # dimension in the coordinate system has corresponding units.
+      def get_units(dimension)
+        _axis_and_unit_info(dimension).split(":")[1]
+      end
+
       # Returns true if this Proj4 object is a geographic (lat-long)
       # coordinate system.
 
@@ -197,6 +211,8 @@ module RGeo
 
             result_ = _create(defn_, opts_[:radians])
             raise RGeo::Error::InvalidProjection unless result_._valid?
+
+            result_.dimension = result_._axis_count
           end
           result_
         end
@@ -228,19 +244,20 @@ module RGeo
         # Transforms the given coordinate (x, y, [z]) from one proj4
         # coordinate system to another. Returns an array with either two
         # or three elements.
-        def transform_coords(from_proj_, to_proj_, x_, y_, z_ = nil)
-          crs_to_crs = CRSStore.get(from_proj_, to_proj_)
-          crs_to_crs.transform_coords(x_, y_, z_)
+        def transform(from_proj, to_proj, x, y, z = nil)
+          crs_to_crs = CRSStore.get(from_proj, to_proj)
+          crs_to_crs.transform_coords(x, y, z)
         end
+        alias transform_coords transform
 
         # Low-level geometry transform method.
         # Transforms the given geometry between the given two projections.
         # The resulting geometry is constructed using the to_factory.
         # Any projections associated with the factories themselves are
         # ignored.
-        def transform(from_proj_, from_geometry_, to_proj_, to_factory_)
-          crs_to_crs = CRSStore.get(from_proj_, to_proj_)
-          crs_to_crs.transform(from_geometry_, to_factory_)
+        def transform_geometry(from_proj, from_geometry, to_proj, to_factory)
+          crs_to_crs = CRSStore.get(from_proj, to_proj)
+          crs_to_crs.transform(from_geometry, to_factory)
         end
       end
     end

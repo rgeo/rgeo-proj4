@@ -301,6 +301,54 @@ static VALUE method_proj4_auth_name_str(VALUE self)
   return result;
 }
 
+static VALUE method_proj4_axis_and_unit_info_str(VALUE self, VALUE dimension)
+{
+  VALUE result;
+  int dimension_index;
+  PJ *pj;
+  PJ *pj_cs;
+  const char *axis_info;
+  const char *unit_name;
+  RGeo_Proj4Data *data;
+
+  Check_Type(dimension, T_FIXNUM);
+
+  dimension_index = FIX2INT(dimension);
+  result = Qnil;
+
+  TypedData_Get_Struct(self, RGeo_Proj4Data, &rgeo_proj4_data_type, data);
+  pj = data->pj;
+  if (pj){
+    pj_cs = proj_crs_get_coordinate_system(PJ_DEFAULT_CTX, pj);
+    if(pj_cs && proj_cs_get_axis_info(PJ_DEFAULT_CTX, pj_cs, dimension_index, &axis_info, NULL, NULL, NULL, &unit_name, NULL, NULL)) {
+      result = rb_sprintf("%s:%s", axis_info, unit_name);
+    }
+  }
+  return result;
+}
+
+static VALUE method_proj4_axis_count(VALUE self)
+{
+  VALUE result;
+  PJ *pj;
+  PJ *pj_cs;
+  int count;
+  RGeo_Proj4Data *data;
+
+  result = Qnil;
+  TypedData_Get_Struct(self, RGeo_Proj4Data, &rgeo_proj4_data_type, data);
+  pj = data->pj;
+  if (pj){
+    pj_cs = proj_crs_get_coordinate_system(PJ_DEFAULT_CTX, pj);
+    if(pj_cs) {
+      count = proj_cs_get_axis_count(PJ_DEFAULT_CTX, pj_cs);
+      result = INT2FIX(count);
+    }
+  }
+  return result;
+}
+
+
 static VALUE method_proj4_is_geographic(VALUE self)
 {
   VALUE result;
@@ -505,6 +553,8 @@ static void rgeo_init_proj4()
   rb_define_method(proj4_class, "_radians?", method_proj4_uses_radians, 0);
   rb_define_method(proj4_class, "_get_geographic", method_proj4_get_geographic, 0);
   rb_define_method(proj4_class, "_crs?", method_proj4_is_crs, 0);
+  rb_define_method(proj4_class, "_axis_and_unit_info", method_proj4_axis_and_unit_info_str, 1);
+  rb_define_method(proj4_class, "_axis_count", method_proj4_axis_count, 0);
   rb_define_module_function(proj4_class, "_proj_version", cmethod_proj4_version, 0);
 
   coordinate_transform_class = rb_define_class_under(cs_module, "CoordinateTransform", cs_info_class);
