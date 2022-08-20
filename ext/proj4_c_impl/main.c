@@ -573,7 +573,7 @@ static VALUE method_crs_to_crs_identity(VALUE self, VALUE from, VALUE to)
   to_pj = to_data->pj;
 
   if(from_pj && to_pj){
-    if(proj_is_equivalent_to_with_ctx(PJ_DEFAULT_CTX, from_pj, to_pj, PJ_COMP_EQUIVALENT)){
+    if(proj_is_equivalent_to(from_pj, to_pj, PJ_COMP_EQUIVALENT)){
       result = Qtrue;
     }
   }

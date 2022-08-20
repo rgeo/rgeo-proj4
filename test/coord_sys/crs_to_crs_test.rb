@@ -53,6 +53,14 @@ class TestCrsToCrs < Minitest::Test # :nodoc:
     assert(crs_to_crs3.identity?)
   end
 
+  def test_inverse
+    crs_to_crs = RGeo::CoordSys::CRSToCRS.create(from, to)
+    inverse_crs_to_crs = crs_to_crs.inverse
+
+    assert_equal(crs_to_crs.source_cs, inverse_crs_to_crs.target_cs)
+    assert_equal(crs_to_crs.target_cs, inverse_crs_to_crs.source_cs)
+  end
+
   def test_transform
     crs_to_crs = RGeo::CoordSys::CRSToCRS.create(from, to)
     a, b = crs_to_crs.transform(733_345.6496818807, 6_750_247.713332973, nil)
