@@ -320,7 +320,7 @@ static VALUE method_proj4_axis_and_unit_info_str(VALUE self, VALUE dimension)
   pj = data->pj;
   if (pj){
     pj_cs = proj_crs_get_coordinate_system(PJ_DEFAULT_CTX, pj);
-    if(pj_cs && proj_cs_get_axis_info(PJ_DEFAULT_CTX, pj_cs, dimension_index, &axis_info, NULL, NULL, NULL, &unit_name, NULL, NULL)) {
+    if (pj_cs && proj_cs_get_axis_info(PJ_DEFAULT_CTX, pj_cs, dimension_index, &axis_info, NULL, NULL, NULL, &unit_name, NULL, NULL)) {
       result = rb_sprintf("%s:%s", axis_info, unit_name);
 
       proj_destroy(pj_cs);
@@ -342,7 +342,7 @@ static VALUE method_proj4_axis_count(VALUE self)
   pj = data->pj;
   if (pj){
     pj_cs = proj_crs_get_coordinate_system(PJ_DEFAULT_CTX, pj);
-    if(pj_cs) {
+    if (pj_cs) {
       count = proj_cs_get_axis_count(PJ_DEFAULT_CTX, pj_cs);
       result = INT2FIX(count);
 
@@ -532,7 +532,7 @@ static VALUE method_crs_to_crs_area_of_use_str(VALUE self)
   TypedData_Get_Struct(self, RGeo_CRSToCRSData, &rgeo_crs_to_crs_data_type, crs_to_crs_data);
   crs_to_crs_pj = crs_to_crs_data->crs_to_crs;
   if (crs_to_crs_pj) {
-    if(proj_get_area_of_use(PJ_DEFAULT_CTX, crs_to_crs_pj, NULL, NULL, NULL, NULL, &str)){
+    if (proj_get_area_of_use(PJ_DEFAULT_CTX, crs_to_crs_pj, NULL, NULL, NULL, NULL, &str)){
       result = rb_str_new2(str);
     }
   }
@@ -572,8 +572,8 @@ static VALUE method_crs_to_crs_identity(VALUE self, VALUE from, VALUE to)
   from_pj = from_data->pj;
   to_pj = to_data->pj;
 
-  if(from_pj && to_pj){
-    if(proj_is_equivalent_to(from_pj, to_pj, PJ_COMP_EQUIVALENT)){
+  if (from_pj && to_pj){
+    if (proj_is_equivalent_to(from_pj, to_pj, PJ_COMP_EQUIVALENT)){
       result = Qtrue;
     }
   }

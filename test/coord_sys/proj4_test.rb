@@ -26,14 +26,14 @@ class TestProj4 < Minitest::Test # :nodoc:
       RGeo::CoordSys::Proj4.create("")
     end
 
-    def test_dimension_assigned_on_create
-      proj = RGeo::CoordSys::Proj4.create("EPSG:3857")
-      assert_equal(2, proj.dimension)
-    end
-
     # will not raise for a valid projection, even though it is not a CRS
     proj = RGeo::CoordSys::Proj4.create("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
     assert(proj._valid?)
+  end
+
+  def test_dimension_assigned_on_create
+    proj = RGeo::CoordSys::Proj4.create("EPSG:3857")
+    assert_equal(2, proj.dimension)
   end
 
   def test_is_crs
