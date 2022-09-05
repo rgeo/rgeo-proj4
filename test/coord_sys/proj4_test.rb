@@ -21,6 +21,12 @@ class TestProj4 < Minitest::Test # :nodoc:
     assert_equal("+proj=longlat +datum=WGS84 +no_defs +type=crs", proj.canonical_str)
   end
 
+  def test_create_epsg_code
+    proj = RGeo::CoordSys::Proj4.create(4326)
+    assert_equal(true, proj.geographic?)
+    assert_equal("EPSG:4326", proj.auth_name)
+  end
+
   def test_valid
     assert_raises(RGeo::Error::InvalidProjection) do
       RGeo::CoordSys::Proj4.create("")

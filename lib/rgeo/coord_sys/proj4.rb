@@ -186,8 +186,9 @@ module RGeo
         end
 
         # Create a new Proj4 object, given a definition, which may be
-        # either a string or a hash. Returns nil if the given definition
-        # is invalid or Proj4 is not supported.
+        # either a string, hash, or integer. If an integer is given, it
+        # assumes that you are using the EPSG SRID that matches that code.
+        # Returns nil if the given definition is invalid or Proj4 is not supported.
         #
         # Recognized options include:
         #
@@ -208,6 +209,8 @@ module RGeo
             if defn_.is_a?(::Hash)
               defn_ = defn_.map { |k_, v_| v_ ? "+#{k_}=#{v_}" : "+#{k_}" }.join(" ")
             end
+
+            defn_ = "EPSG:#{defn_}" if defn_.is_a?(Integer)
 
             result_ = _create(defn_, opts_[:radians])
             raise RGeo::Error::InvalidProjection unless result_._valid?
