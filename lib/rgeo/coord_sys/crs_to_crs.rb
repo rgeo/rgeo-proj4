@@ -42,7 +42,7 @@ module RGeo
       end
 
       # transform the coordinates from the initial CRS to the destination CRS
-      def transform(x, y, z)
+      def transform_coords(x, y, z)
         if from._radians? && from._geographic?
           x *= ImplHelper::Math::DEGREES_PER_RADIAN
           y *= ImplHelper::Math::DEGREES_PER_RADIAN
@@ -55,7 +55,7 @@ module RGeo
         result
       end
 
-      def transform_geometry(from_geometry, to_factory)
+      def transform(from_geometry, to_factory)
         case from_geometry
         when Feature::Point
           transform_point(from_geometry, to_factory)
@@ -70,11 +70,11 @@ module RGeo
         when Feature::MultiPoint
           to_factory.multi_point(from_geometry.map { |p| transform_point(p, to_factory) })
         when Feature::MultiLineString
-          to_factory.multi_line_string(from_geometry.map { |g| transform_geometry(g, to_factory) })
+          to_factory.multi_line_string(from_geometry.map { |g| transform(g, to_factory) })
         when Feature::MultiPolygon
           to_factory.multi_polygon(from_geometry.map { |p| transform_polygon(p, to_factory) })
         when Feature::GeometryCollection
-          to_factory.collection(from_geometry.map { |g| transform_geometry(g, to_factory) })
+          to_factory.collection(from_geometry.map { |g| transform(g, to_factory) })
         end
       end
 
@@ -84,7 +84,7 @@ module RGeo
         from_has_m_ = from_factory_.property(:has_m_coordinate)
         to_has_z_ = to_factory.property(:has_z_coordinate)
         to_has_m_ = to_factory.property(:has_m_coordinate)
-        coords_ = transform(from_point.x, from_point.y, from_has_z_ ? from_point.z : nil)
+        coords_ = transform_coords(from_point.x, from_point.y, from_has_z_ ? from_point.z : nil)
         return unless coords_
         extras_ = []
         extras_ << coords_[2].to_f if to_has_z_

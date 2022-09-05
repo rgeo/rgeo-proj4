@@ -5,4 +5,4 @@ gemspec
 gem "pry-byebug" unless ENV["CI"]
 
 # TODO: remove once we actually release version 3
-gem "rgeo", git: "https://github.com/rgeo/rgeo", branch: "main"
+gem "rgeo", git: "https://github.com/rgeo/rgeo", branch: "rename-cs-transform"

@@ -125,7 +125,7 @@ class TestProj4 < Minitest::Test # :nodoc:
     geography = RGeo::Geos.factory(proj4: "EPSG:4326", srid: 4326)
     projection = RGeo::Geos.factory(proj4: "EPSG:27700", srid: 27_700)
     proj_point = projection.parse_wkt("POINT(473600.5000000000000000 186659.7999999999883585)")
-    geo_point = RGeo::CoordSys::Proj4.transform_geometry(projection.proj4, proj_point, geography.proj4, geography)
+    geo_point = RGeo::CoordSys::Proj4.transform(projection.proj4, proj_point, geography.proj4, geography)
     assert_close_enough(-0.9393598527244420, geo_point.x)
     assert_close_enough(51.5740106527552697, geo_point.y)
   end
@@ -194,7 +194,7 @@ class TestProj4 < Minitest::Test # :nodoc:
     to_factory = RGeo::Cartesian.factory(srid: 4326, proj4: to_proj)
 
     from_geom = from_factory.parse_wkt(from_wkt)
-    to_geom = RGeo::CoordSys::Proj4.transform_geometry(from_proj, from_geom, to_proj, to_factory)
+    to_geom = RGeo::CoordSys::Proj4.transform(from_proj, from_geom, to_proj, to_factory)
     expected_geom = to_factory.parse_wkt(expected_wkt)
 
     to_geom.coordinates.zip(expected_geom.coordinates).each do |p1, p2|

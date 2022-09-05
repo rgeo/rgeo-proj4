@@ -244,20 +244,19 @@ module RGeo
         # Transforms the given coordinate (x, y, [z]) from one proj4
         # coordinate system to another. Returns an array with either two
         # or three elements.
-        def transform(from_proj, to_proj, x, y, z = nil)
+        def transform_coords(from_proj, to_proj, x, y, z = nil)
           crs_to_crs = CRSStore.get(from_proj, to_proj)
-          crs_to_crs.transform(x, y, z)
+          crs_to_crs.transform_coords(x, y, z)
         end
-        alias transform_coords transform
 
         # Low-level geometry transform method.
         # Transforms the given geometry between the given two projections.
         # The resulting geometry is constructed using the to_factory.
         # Any projections associated with the factories themselves are
         # ignored.
-        def transform_geometry(from_proj, from_geometry, to_proj, to_factory)
+        def transform(from_proj, from_geometry, to_proj, to_factory)
           crs_to_crs = CRSStore.get(from_proj, to_proj)
-          crs_to_crs.transform_geometry(from_geometry, to_factory)
+          crs_to_crs.transform(from_geometry, to_factory)
         end
       end
     end

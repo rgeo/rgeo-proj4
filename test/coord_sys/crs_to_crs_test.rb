@@ -61,9 +61,9 @@ class TestCrsToCrs < Minitest::Test # :nodoc:
     assert_equal(crs_to_crs.target_cs, inverse_crs_to_crs.source_cs)
   end
 
-  def test_transform
+  def test_transform_coords
     crs_to_crs = RGeo::CoordSys::CRSToCRS.create(from, to)
-    a, b = crs_to_crs.transform(733_345.6496818807, 6_750_247.713332973, nil)
+    a, b = crs_to_crs.transform_coords(733_345.6496818807, 6_750_247.713332973, nil)
     assert_close_enough(a, 3.4458703379573348)
     assert_close_enough(b, 47.85177684510492)
   end
@@ -75,11 +75,11 @@ class TestCrsToCrs < Minitest::Test # :nodoc:
     proj2 = RGeo::CoordSys::Proj4.create("EPSG:3857")
 
     assert_raises(RGeo::Error::InvalidProjection) do
-      RGeo::CoordSys::Proj4.transform(proj1, proj2, 1, 2, nil)
+      RGeo::CoordSys::Proj4.transform_coords(proj1, proj2, 1, 2, nil)
     end
 
     assert_raises(RGeo::Error::InvalidProjection) do
-      RGeo::CoordSys::Proj4.transform(proj2, proj1, 1, 2, nil)
+      RGeo::CoordSys::Proj4.transform_coords(proj2, proj1, 1, 2, nil)
     end
 
     assert_raises(RGeo::Error::InvalidProjection) do
