@@ -320,8 +320,10 @@ static VALUE method_proj4_axis_and_unit_info_str(VALUE self, VALUE dimension)
   pj = data->pj;
   if (pj){
     pj_cs = proj_crs_get_coordinate_system(PJ_DEFAULT_CTX, pj);
-    if (pj_cs && proj_cs_get_axis_info(PJ_DEFAULT_CTX, pj_cs, dimension_index, &axis_info, NULL, NULL, NULL, &unit_name, NULL, NULL)) {
-      result = rb_sprintf("%s:%s", axis_info, unit_name);
+    if (pj_cs) {
+      if (proj_cs_get_axis_info(PJ_DEFAULT_CTX, pj_cs, dimension_index, &axis_info, NULL, NULL, NULL, &unit_name, NULL, NULL)) {
+        result = rb_sprintf("%s:%s", axis_info, unit_name);
+      }
 
       proj_destroy(pj_cs);
     }
