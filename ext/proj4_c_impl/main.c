@@ -301,6 +301,60 @@ static VALUE method_proj4_auth_name_str(VALUE self)
   return result;
 }
 
+static VALUE method_proj4_axis_and_unit_info_str(VALUE self, VALUE dimension)
+{
+  VALUE result;
+  int dimension_index;
+  PJ *pj;
+  PJ *pj_cs;
+  const char *axis_info;
+  const char *unit_name;
+  RGeo_Proj4Data *data;
+
+  Check_Type(dimension, T_FIXNUM);
+
+  dimension_index = FIX2INT(dimension);
+  result = Qnil;
+
+  TypedData_Get_Struct(self, RGeo_Proj4Data, &rgeo_proj4_data_type, data);
+  pj = data->pj;
+  if (pj){
+    pj_cs = proj_crs_get_coordinate_system(PJ_DEFAULT_CTX, pj);
+    if (pj_cs) {
+      if (proj_cs_get_axis_info(PJ_DEFAULT_CTX, pj_cs, dimension_index, &axis_info, NULL, NULL, NULL, &unit_name, NULL, NULL)) {
+        result = rb_sprintf("%s:%s", axis_info, unit_name);
+      }
+
+      proj_destroy(pj_cs);
+    }
+  }
+  return result;
+}
+
+static VALUE method_proj4_axis_count(VALUE self)
+{
+  VALUE result;
+  PJ *pj;
+  PJ *pj_cs;
+  int count;
+  RGeo_Proj4Data *data;
+
+  result = Qnil;
+  TypedData_Get_Struct(self, RGeo_Proj4Data, &rgeo_proj4_data_type, data);
+  pj = data->pj;
+  if (pj){
+    pj_cs = proj_crs_get_coordinate_system(PJ_DEFAULT_CTX, pj);
+    if (pj_cs) {
+      count = proj_cs_get_axis_count(PJ_DEFAULT_CTX, pj_cs);
+      result = INT2FIX(count);
+
+      proj_destroy(pj_cs);
+    }
+  }
+  return result;
+}
+
+
 static VALUE method_proj4_is_geographic(VALUE self)
 {
   VALUE result;
@@ -449,17 +503,106 @@ static VALUE method_crs_to_crs_transform(VALUE self, VALUE x, VALUE y, VALUE z)
   return result;
 }
 
+static VALUE method_crs_to_crs_wkt_str(VALUE self)
+{
+  VALUE result;
+  RGeo_CRSToCRSData *crs_to_crs_data;
+  PJ *crs_to_crs_pj;
+  const char *str;
+
+  result = Qnil;
+  TypedData_Get_Struct(self, RGeo_CRSToCRSData, &rgeo_crs_to_crs_data_type, crs_to_crs_data);
+  crs_to_crs_pj = crs_to_crs_data->crs_to_crs;
+  if (crs_to_crs_pj) {
+    const char *const options[] = {"MULTILINE=NO", NULL};
+    str = proj_as_wkt(PJ_DEFAULT_CTX, crs_to_crs_pj, WKT_TYPE, options);
+    if (str){
+      result = rb_str_new2(str);
+    }
+  }
+  return result;
+}
+
+static VALUE method_crs_to_crs_area_of_use_str(VALUE self)
+{
+  VALUE result;
+  RGeo_CRSToCRSData *crs_to_crs_data;
+  PJ *crs_to_crs_pj;
+  const char *str;
+
+  result = Qnil;
+  TypedData_Get_Struct(self, RGeo_CRSToCRSData, &rgeo_crs_to_crs_data_type, crs_to_crs_data);
+  crs_to_crs_pj = crs_to_crs_data->crs_to_crs;
+  if (crs_to_crs_pj) {
+    if (proj_get_area_of_use(PJ_DEFAULT_CTX, crs_to_crs_pj, NULL, NULL, NULL, NULL, &str)){
+      result = rb_str_new2(str);
+    }
+  }
+  return result;
+}
+
+static VALUE method_crs_to_crs_proj_type(VALUE self)
+{
+  VALUE result;
+  RGeo_CRSToCRSData *crs_to_crs_data;
+  PJ *crs_to_crs_pj;
+  int proj_type;
+
+  result = Qnil;
+  TypedData_Get_Struct(self, RGeo_CRSToCRSData, &rgeo_crs_to_crs_data_type, crs_to_crs_data);
+  crs_to_crs_pj = crs_to_crs_data->crs_to_crs;
+  if (crs_to_crs_pj) {
+    proj_type = proj_get_type(crs_to_crs_pj);
+    result = INT2FIX(proj_type);
+  }
+  return result;
+}
+
+static VALUE method_crs_to_crs_identity(VALUE self, VALUE from, VALUE to)
+{
+  VALUE result;
+  RGeo_Proj4Data *from_data;
+  RGeo_Proj4Data *to_data;
+  result = Qnil;
+  PJ *from_pj;
+  PJ *to_pj;
+
+  result = Qfalse;
+
+  TypedData_Get_Struct(from, RGeo_Proj4Data, &rgeo_proj4_data_type, from_data);
+  TypedData_Get_Struct(to, RGeo_Proj4Data, &rgeo_proj4_data_type, to_data);
+  from_pj = from_data->pj;
+  to_pj = to_data->pj;
+
+  if (from_pj && to_pj){
+    if (proj_is_equivalent_to(from_pj, to_pj, PJ_COMP_EQUIVALENT)){
+      result = Qtrue;
+    }
+  }
+
+  return result;
+}
+
 static void rgeo_init_proj4()
 {
   VALUE rgeo_module;
   VALUE coordsys_module;
+  VALUE cs_module;
   VALUE proj4_class;
   VALUE crs_to_crs_class;
+  VALUE cs_base_class;
+  VALUE cs_info_class;
+  VALUE coordinate_system_class;
+  VALUE coordinate_transform_class;
 
   rgeo_module = rb_define_module("RGeo");
   coordsys_module = rb_define_module_under(rgeo_module, "CoordSys");
+  cs_module = rb_define_module_under(coordsys_module, "CS");
+  cs_base_class = rb_define_class_under(cs_module, "Base", rb_cObject);
+  cs_info_class = rb_define_class_under(cs_module, "Info", cs_base_class);
 
-  proj4_class = rb_define_class_under(coordsys_module, "Proj4", rb_cObject);
+  coordinate_system_class = rb_define_class_under(cs_module, "CoordinateSystem", cs_info_class);
+  proj4_class = rb_define_class_under(coordsys_module, "Proj4", coordinate_system_class);
   rb_define_alloc_func(proj4_class, rgeo_proj4_data_alloc);
   rb_define_module_function(proj4_class, "_create", cmethod_proj4_create, 2);
   rb_define_method(proj4_class, "initialize_copy", method_proj4_initialize_copy, 1);
@@ -474,13 +617,20 @@ static void rgeo_init_proj4()
   rb_define_method(proj4_class, "_radians?", method_proj4_uses_radians, 0);
   rb_define_method(proj4_class, "_get_geographic", method_proj4_get_geographic, 0);
   rb_define_method(proj4_class, "_crs?", method_proj4_is_crs, 0);
+  rb_define_method(proj4_class, "_axis_and_unit_info", method_proj4_axis_and_unit_info_str, 1);
+  rb_define_method(proj4_class, "_axis_count", method_proj4_axis_count, 0);
   rb_define_module_function(proj4_class, "_proj_version", cmethod_proj4_version, 0);
 
+  coordinate_transform_class = rb_define_class_under(cs_module, "CoordinateTransform", cs_info_class);
 
-  crs_to_crs_class = rb_define_class_under(coordsys_module, "CRSToCRS", rb_cObject);
+  crs_to_crs_class = rb_define_class_under(coordsys_module, "CRSToCRS", coordinate_transform_class);
   rb_define_alloc_func(crs_to_crs_class, rgeo_crs_to_crs_data_alloc);
   rb_define_module_function(crs_to_crs_class, "_create", cmethod_crs_to_crs_create, 2);
   rb_define_method(crs_to_crs_class, "_transform_coords", method_crs_to_crs_transform, 3);
+  rb_define_method(crs_to_crs_class, "_as_text", method_crs_to_crs_wkt_str, 0);
+  rb_define_method(crs_to_crs_class, "_proj_type", method_crs_to_crs_proj_type, 0);
+  rb_define_method(crs_to_crs_class, "_area_of_use", method_crs_to_crs_area_of_use_str, 0);
+  rb_define_method(crs_to_crs_class, "_identity?", method_crs_to_crs_identity, 2);
 }
 
 

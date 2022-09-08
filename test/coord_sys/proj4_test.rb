@@ -8,11 +8,23 @@ class TestProj4 < Minitest::Test # :nodoc:
     # assert_match(/^\d+\.\d+(\.\d+)?$/, RGeo::CoordSys::Proj4.version)
   end
 
+  def test_inheritance
+    proj = RGeo::CoordSys::Proj4.create("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +type=crs")
+    assert(proj.is_a?(RGeo::CoordSys::Proj4))
+    assert(proj.is_a?(RGeo::CoordSys::CS::CoordinateSystem))
+  end
+
   def test_create_wgs84
     proj = RGeo::CoordSys::Proj4.create("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +type=crs")
     assert_equal(true, proj.geographic?)
     assert_equal("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +type=crs", proj.original_str)
     assert_equal("+proj=longlat +datum=WGS84 +no_defs +type=crs", proj.canonical_str)
+  end
+
+  def test_create_epsg_code
+    proj = RGeo::CoordSys::Proj4.create(4326)
+    assert_equal(true, proj.geographic?)
+    assert_equal("EPSG:4326", proj.auth_name)
   end
 
   def test_valid
@@ -23,6 +35,11 @@ class TestProj4 < Minitest::Test # :nodoc:
     # will not raise for a valid projection, even though it is not a CRS
     proj = RGeo::CoordSys::Proj4.create("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
     assert(proj._valid?)
+  end
+
+  def test_dimension_assigned_on_create
+    proj = RGeo::CoordSys::Proj4.create("EPSG:3857")
+    assert_equal(2, proj.dimension)
   end
 
   def test_is_crs
@@ -50,6 +67,16 @@ class TestProj4 < Minitest::Test # :nodoc:
 
     proj = RGeo::CoordSys::Proj4.create("+proj=longlat +ellps=WGS84 +datum=WGS84 +lat_ts=5.0 +no_defs +type=crs")
     assert_nil(proj.auth_name)
+  end
+
+  def test_get_axis
+    proj = RGeo::CoordSys::Proj4.create("EPSG:3857")
+    assert_equal("Easting", proj.get_axis(0))
+  end
+
+  def test_get_units
+    proj = RGeo::CoordSys::Proj4.create("EPSG:3857")
+    assert_equal("metre", proj.get_units(0))
   end
 
   def test_get_wgs84_geographic
