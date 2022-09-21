@@ -394,6 +394,23 @@ static VALUE method_proj4_is_geocentric(VALUE self)
   return result;
 }
 
+static VALUE method_proj4_is_projected(VALUE self)
+{
+  VALUE result;
+  PJ *pj;
+  PJ_TYPE proj_type;
+  RGeo_Proj4Data *data;
+
+  result = Qnil;
+  TypedData_Get_Struct(self, RGeo_Proj4Data, &rgeo_proj4_data_type, data);
+  pj = data->pj;
+  if (pj) {
+    proj_type = proj_get_type(pj);
+    result = proj_type == PJ_TYPE_PROJECTED_CRS ? Qtrue : Qfalse;
+  }
+  return result;
+}
+
 
 static VALUE method_proj4_is_valid(VALUE self)
 {
@@ -614,6 +631,7 @@ static void rgeo_init_proj4()
   rb_define_method(proj4_class, "_valid?", method_proj4_is_valid, 0);
   rb_define_method(proj4_class, "_geographic?", method_proj4_is_geographic, 0);
   rb_define_method(proj4_class, "_geocentric?", method_proj4_is_geocentric, 0);
+  rb_define_method(proj4_class, "_projected?", method_proj4_is_projected, 0);
   rb_define_method(proj4_class, "_radians?", method_proj4_uses_radians, 0);
   rb_define_method(proj4_class, "_get_geographic", method_proj4_get_geographic, 0);
   rb_define_method(proj4_class, "_crs?", method_proj4_is_crs, 0);

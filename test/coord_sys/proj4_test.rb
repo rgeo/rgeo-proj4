@@ -96,6 +96,11 @@ class TestProj4 < Minitest::Test # :nodoc:
     assert_equal([1, 2, 0], coords)
   end
 
+  def test_projected
+    proj = RGeo::CoordSys::Proj4.create("EPSG:3857")
+    assert(proj.projected?)
+  end
+
   def test_identity_transform
     proj = RGeo::CoordSys::Proj4.create("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +type=crs")
     assert_equal([1, 2, 0], RGeo::CoordSys::Proj4.transform_coords(proj, proj, 1, 2, 0))

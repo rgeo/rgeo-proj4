@@ -149,6 +149,13 @@ module RGeo
         _geocentric?
       end
 
+      # Returns true if this Proj4 object is a projected
+      # coordinate system
+
+      def projected?
+        _projected?
+      end
+
       # Returns true if this Proj4 object uses radians rather than degrees
       # if it is a geographic coordinate system.
 
