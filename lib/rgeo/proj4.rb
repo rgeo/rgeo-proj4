@@ -44,3 +44,5 @@ module RGeo
     ].freeze
   end
 end
+
+RGeo::CoordSys::CONFIG.default_coord_sys_class = RGeo::CoordSys::Proj4 if RGeo::CoordSys::Proj4.supported?

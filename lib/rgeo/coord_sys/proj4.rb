@@ -163,11 +163,38 @@ module RGeo
       def get_geographic
         _get_geographic
       end
+      alias geographic_coordinate_system get_geographic
 
       # Returns true if this Proj4 object represents a CRS.
 
       def crs?
         _crs?
+      end
+
+      # Sometimes used to assign SRIDs in factory creation
+      # Also in the base CS::Info class that CS::CoordinateSystem
+      # inherits from
+      #
+      # @return [Integer|NilClass] authority code if available
+      def authority_code
+        auth_name.split(":")[1].to_i if auth_name
+      end
+
+      # Low-level coordinate transform method.
+      # Transforms the given coordinate (x, y, [z]) from one proj4
+      # coordinate system to another. Returns an array with either two
+      # or three elements.
+      def transform_coords(to_proj, x, y, z = nil)
+        self.class.transform_coords(self, to_proj, x, y, z)
+      end
+
+      # Low-level geometry transform method.
+      # Transforms the given geometry between the given two projections.
+      # The resulting geometry is constructed using the to_factory.
+      # Any projections associated with the factories themselves are
+      # ignored.
+      def transform(from_geometry, to_proj, to_factory)
+        self.class.transform(self, from_geometry, to_proj, to_factory)
       end
 
       class << self
@@ -219,6 +246,7 @@ module RGeo
           end
           result_
         end
+        alias create_from_wkt create
 
         # Create a new Proj4 object, given a definition, which may be
         # either a string or a hash. Raises Error::UnsupportedOperation

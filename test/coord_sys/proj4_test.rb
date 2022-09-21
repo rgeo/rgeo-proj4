@@ -69,6 +69,14 @@ class TestProj4 < Minitest::Test # :nodoc:
     assert_nil(proj.auth_name)
   end
 
+  def test_authority_code
+    proj = RGeo::CoordSys::Proj4.create("EPSG:4326")
+    assert_equal(4326, proj.authority_code)
+
+    proj = RGeo::CoordSys::Proj4.create("+proj=longlat +ellps=WGS84 +datum=WGS84 +lat_ts=5.0 +no_defs +type=crs")
+    assert_nil(proj.authority_code)
+  end
+
   def test_get_axis
     proj = RGeo::CoordSys::Proj4.create("EPSG:3857")
     assert_equal("Easting", proj.get_axis(0))
@@ -119,21 +127,21 @@ class TestProj4 < Minitest::Test # :nodoc:
   end
 
   def test_point_projection_cast
-    geography = RGeo::Geos.factory(proj4: "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +type=crs", srid: 4326)
-    projection = RGeo::Geos.factory(proj4: "+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.9996012717 +x_0=400000 +y_0=-100000 +ellps=airy +datum=OSGB36 +units=m +no_defs +type=crs", srid: 27_700)
+    geography = RGeo::Geos.factory(coord_sys: "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +type=crs", srid: 4326)
+    projection = RGeo::Geos.factory(coord_sys: "+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.9996012717 +x_0=400000 +y_0=-100000 +ellps=airy +datum=OSGB36 +units=m +no_defs +type=crs", srid: 27_700)
     proj_point = projection.parse_wkt("POINT(473600.5000000000000000 186659.7999999999883585)")
     geo_point = RGeo::Feature.cast(proj_point, project: true, factory: geography)
-    assert_close_enough(-0.9393598527244420, geo_point.x)
-    assert_close_enough(51.5740106527552697, geo_point.y)
+    assert_close_enough(-0.9393398012634104, geo_point.x)
+    assert_close_enough(51.57401370685238, geo_point.y)
   end
 
   def test_point_transform_lowlevel
-    geography = RGeo::Geos.factory(proj4: "EPSG:4326", srid: 4326)
-    projection = RGeo::Geos.factory(proj4: "EPSG:27700", srid: 27_700)
+    geography = RGeo::Geos.factory(coord_sys: "EPSG:4326", srid: 4326)
+    projection = RGeo::Geos.factory(coord_sys: "EPSG:27700", srid: 27_700)
     proj_point = projection.parse_wkt("POINT(473600.5000000000000000 186659.7999999999883585)")
-    geo_point = RGeo::CoordSys::Proj4.transform(projection.proj4, proj_point, geography.proj4, geography)
-    assert_close_enough(-0.9393598527244420, geo_point.x)
-    assert_close_enough(51.5740106527552697, geo_point.y)
+    geo_point = RGeo::CoordSys::Proj4.transform(projection.coord_sys, proj_point, geography.coord_sys, geography)
+    assert_close_enough(-0.9393398012634104, geo_point.x)
+    assert_close_enough(51.57401370685238, geo_point.y)
   end
 
   def test_geocentric
@@ -193,11 +201,11 @@ class TestProj4 < Minitest::Test # :nodoc:
 
     from_def = "+proj=lcc +lat_1=49 +lat_2=44 +lat_0=46.5 +lon_0=3 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs"
     from_proj = RGeo::CoordSys::Proj4.create(from_def)
-    from_factory = RGeo::Cartesian.factory(srid: 2154, proj4: from_proj)
+    from_factory = RGeo::Cartesian.factory(srid: 2154, coord_sys: from_proj)
 
     to_def = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +type=crs"
     to_proj = RGeo::CoordSys::Proj4.create(to_def)
-    to_factory = RGeo::Cartesian.factory(srid: 4326, proj4: to_proj)
+    to_factory = RGeo::Cartesian.factory(srid: 4326, coord_sys: to_proj)
 
     from_geom = from_factory.parse_wkt(from_wkt)
     to_geom = RGeo::CoordSys::Proj4.transform(from_proj, from_geom, to_proj, to_factory)
