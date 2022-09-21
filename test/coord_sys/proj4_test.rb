@@ -136,8 +136,8 @@ class TestProj4 < Minitest::Test # :nodoc:
     projection = RGeo::Geos.factory(coord_sys: "+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.9996012717 +x_0=400000 +y_0=-100000 +ellps=airy +datum=OSGB36 +units=m +no_defs +type=crs", srid: 27_700)
     proj_point = projection.parse_wkt("POINT(473600.5000000000000000 186659.7999999999883585)")
     geo_point = RGeo::Feature.cast(proj_point, project: true, factory: geography)
-    assert_close_enough(-0.9393398012634104, geo_point.x)
-    assert_close_enough(51.57401370685238, geo_point.y)
+    assert_close_enough(-0.9393598527244420, geo_point.x)
+    assert_close_enough(51.5740106527552697, geo_point.y)
   end
 
   def test_point_transform_lowlevel
@@ -145,8 +145,8 @@ class TestProj4 < Minitest::Test # :nodoc:
     projection = RGeo::Geos.factory(coord_sys: "EPSG:27700", srid: 27_700)
     proj_point = projection.parse_wkt("POINT(473600.5000000000000000 186659.7999999999883585)")
     geo_point = RGeo::CoordSys::Proj4.transform(projection.coord_sys, proj_point, geography.coord_sys, geography)
-    assert_close_enough(-0.9393398012634104, geo_point.x)
-    assert_close_enough(51.57401370685238, geo_point.y)
+    assert_close_enough(-0.9393598527244420, geo_point.x)
+    assert_close_enough(51.5740106527552697, geo_point.y)
   end
 
   def test_geocentric

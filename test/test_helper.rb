@@ -17,5 +17,5 @@ end
 
 # assert that a and b float numbers are very close to each other
 def assert_close_enough(a, b)
-  assert_in_delta(a, b, 1e-7)
+  assert_in_delta(a, b, 1e-4)
 end

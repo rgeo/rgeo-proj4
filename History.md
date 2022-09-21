@@ -1,3 +1,20 @@
+### Current
+
+**Breaking Changes**
+* Raise `RGeo::Error::InvalidProjection` if PROJ cannot parse the input string when creating a projection. #26
+* Raise `InvalidProjection` when a non-crs projection is attempting to create a `CRSToCRS` object. #26
+* Remove `Proj4Data` module. #32
+* Interface with RGeo V3 `coord_sys` handling. #33
+
+**Minor Changes**
+* Add the `crs?` method to `Proj4` instances. #26
+* `Proj4` implements `CoordSys::CS::CoordinateSystem` #32
+* `CRSToCRS` implements `CoordSys::CS::CoordinateTransform` #32
+* Integer SRIDs can be used to create `Proj4`s #32.
+
+**Bug Fixes**
+* Invalid PROJ definitions will no longer cause segfaults. #26
+
 ### 3.1.1 / 2021-11-08
 
 * Move transform methods to `CRSToCRS` #23 (x4d3)
