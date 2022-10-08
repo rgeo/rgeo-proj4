@@ -57,9 +57,9 @@ else
       proj_create_crs_to_crs_from_pj
       proj_normalize_for_visualization
     ]
-    found_valid_proj_version = required_proj_funcs.map do |func|
+    found_valid_proj_version = required_proj_funcs.all? do |func|
       have_func(func, "proj.h")
-    end.all?(true)
+    end
   end
   have_func("rb_gc_mark_movable")
 
