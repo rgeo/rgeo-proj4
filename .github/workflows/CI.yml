@@ -39,28 +39,30 @@ jobs:
         if: matrix.os == 'ubuntu'
         run: |
           sudo add-apt-repository ppa:ubuntugis/ubuntugis-unstable
-          sudo apt-get install curl libcurl4-openssl-dev libssl-dev libgeos-dev
+          sudo apt-get install curl libcurl4-openssl-dev libssl-dev libgeos-dev cmake
       - name: Install Packages (Mac)
         if: matrix.os == 'macos'
-        run: brew install geos make
+        run: brew install geos cmake
       - uses: actions/cache@v2
         id: proj-cache
         with:
           path: ./proj-${{ matrix.proj }}
-          key: proj-${{ matrix.proj }}-os-${{ matrix.os }}
+          key: proj-${{ matrix.proj }}-os-${{ matrix.os }}-cmake-version
       - name: Download and Compile Proj
         if: steps.proj-cache.outputs.cache-hit != 'true'
         run: |
           wget -c https://download.osgeo.org/proj/proj-${{ matrix.proj }}.tar.gz -O - | tar -xz
           cd proj-${{ matrix.proj }}
-          ./configure --enable-shared --enable-fast-install
-          make -j 8
-          cd ../
+          mkdir build
+          cd build
+          cmake ..
+          cmake --build .
+          cd ../../
       - name: Install Proj
         run: |
-          cd proj-${{ matrix.proj }}
-          sudo make install
-          cd ../
+          cd proj-${{ matrix.proj }}/build
+          sudo cmake --build . --target install
+          cd ../../
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
