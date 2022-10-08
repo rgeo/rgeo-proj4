@@ -47,7 +47,7 @@ jobs:
         id: proj-cache
         with:
           path: ./proj-${{ matrix.proj }}
-          key: proj-${{ matrix.proj }}-os-${{ matrix.os }}
+          key: proj-${{ matrix.proj }}-os-${{ matrix.os }}-cmake-version
       - name: Download and Compile Proj
         if: steps.proj-cache.outputs.cache-hit != 'true'
         run: |
