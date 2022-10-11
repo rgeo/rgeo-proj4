@@ -1,4 +1,4 @@
-### Current
+### 4.0.0-rc.1 / 2022-10-11
 
 **Breaking Changes**
 * Raise `RGeo::Error::InvalidProjection` if PROJ cannot parse the input string when creating a projection. #26
