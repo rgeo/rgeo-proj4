@@ -5,6 +5,7 @@
 * Raise `InvalidProjection` when a non-crs projection is attempting to create a `CRSToCRS` object. #26
 * Remove `Proj4Data` module. #32
 * Interface with RGeo V3 `coord_sys` handling. #33
+* Compilation will fail if Proj is not found or too old of a version is found. #35
 
 **Minor Changes**
 * Add the `crs?` method to `Proj4` instances. #26
