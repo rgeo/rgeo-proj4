@@ -70,6 +70,9 @@ jobs:
       - name: Bundle Install
         run: |
           bundle install
+      - name: Set Maintainer Mode
+        if: ${{ github.event.pull_request }}
+        run: export MAINTAINER_MODE=1
       - name: Test
         run: bundle exec rake
   RuboCop:
