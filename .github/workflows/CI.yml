@@ -72,6 +72,20 @@ jobs:
           bundle install
       - name: Test
         run: bundle exec rake
+  Memcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 'head'
+          bundler-cache: true
+      - name: Install dependencies
+        run: |
+          sudo apt-add-repository ppa:ubuntugis/ubuntugis-unstable
+          sudo apt-get install -yqq libgeos-dev libproj-dev proj-bin valgrind
+      - name: Test & Memcheck
+        run: bundle exec rake test:valgrind
   RuboCop:
     runs-on: ubuntu-latest
     steps:

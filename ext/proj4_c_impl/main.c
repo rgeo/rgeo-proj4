@@ -38,7 +38,7 @@ static void rgeo_proj4_free(void *ptr) {
   if (data->pj) {
     proj_destroy(data->pj);
   }
-  free(data);
+  FREE(data);
 }
 
 // Destroy function for crs_to_crs data.
@@ -47,7 +47,7 @@ static void rgeo_crs_to_crs_free(void *ptr) {
   if (data->crs_to_crs) {
     proj_destroy(data->crs_to_crs);
   }
-  free(data);
+  FREE(data);
 }
 
 static size_t rgeo_proj4_memsize(const void *ptr) {
@@ -196,7 +196,7 @@ static VALUE method_proj4_get_geographic(VALUE self) {
 
     geographic_proj = proj_crs_get_geodetic_crs(PJ_DEFAULT_CTX, self_data->pj);
     if (geographic_proj == 0) {
-      xfree(new_data);
+      FREE(new_data);
       rb_raise(rb_eRGeoInvalidProjectionError,
                "Geographic CRS could not be created because the source "
                "projection is not a CRS");
