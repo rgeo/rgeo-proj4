@@ -14,6 +14,10 @@
 #define mark rb_gc_mark
 #endif
 
+// When using ruby ALLOC* macros, we are using ruby_xmalloc, which counterpart
+// is ruby_xfree. This macro helps enforcing that by showing us the way.
+#define FREE ruby_xfree
+
 #ifdef __cplusplus
 #define RGEO_BEGIN_C extern "C" {
 #define RGEO_END_C }

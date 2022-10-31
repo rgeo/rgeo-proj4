@@ -1,3 +1,8 @@
+### Current
+
+**Minor Changes**
+* Change from malloc free to ruby_xfree in c extension.
+
 ### 4.0.0-rc.1 / 2022-10-11
 
 **Breaking Changes**

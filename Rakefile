@@ -1,5 +1,7 @@
 require "rake/testtask"
 require "rake/extensiontask"
+require "ruby_memcheck"
+
 # require "rdoc/task"
 
 # Gemspec
@@ -13,6 +15,9 @@ require "bundler/gem_tasks"
 # Directories
 pkg_directory = "pkg"
 tmp_directory = "tmp"
+
+RubyMemcheck.config(binary_name: "proj4_c_impl",
+                    valgrind_suppressions_dir: "test/valgrind/suppressions")
 
 # Build tasks
 
@@ -38,10 +43,16 @@ end
 
 # Unit test task
 
-Rake::TestTask.new(:test) do |t|
+test_config = proc do |t|
   t.libs << "test"
   t.libs << "lib"
   t.test_files = FileList["test/**/*_test.rb"]
+end
+
+Rake::TestTask.new(:test, &test_config)
+
+namespace :test do
+  RubyMemcheck::TestTask.new(valgrind: :compile, &test_config)
 end
 
 task test: :compile

@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+cp test/valgrind/Dockerfile .
+trap 'rm Dockerfile' EXIT
+docker build -t rgeo-proj4-valgrind --progress=plain . && docker run -it rgeo-proj4-valgrind
