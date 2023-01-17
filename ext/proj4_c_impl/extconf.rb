@@ -12,8 +12,8 @@ else
 
   require "mkmf"
 
-  with_default_header_paths = with_config("default-header-paths", default = true)
-  with_default_lib_paths = with_config("default-lib-paths", default = true)
+  with_default_header_paths = with_config("default-header-paths", true)
+  with_default_lib_paths = with_config("default-lib-paths", true)
 
   header_dirs_ = [ ::RbConfig::CONFIG["includedir"] ]
   if with_default_header_paths
