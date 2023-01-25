@@ -60,6 +60,8 @@ jobs:
           cd ../../
       - name: Install Proj
         run: |
+          ls proj-${{ matrix.proj }}
+          ls proj-${{ matrix.proj }}/build
           cd proj-${{ matrix.proj }}/build
           sudo cmake --build . --target install
           cd ../../
