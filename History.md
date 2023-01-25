@@ -1,7 +1,8 @@
-### Current
+### 4.0.0 / 2023-01-25
 
 **Minor Changes**
-* Change from malloc free to ruby_xfree in c extension.
+* Change from malloc free to ruby_xfree in c extension. #38
+* Add `MAINTAINER_MODE` and `DEBUG` flags for compilation. #37
 
 ### 4.0.0-rc.1 / 2022-10-11
 

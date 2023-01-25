@@ -60,6 +60,12 @@ By default, the gem looks for the Proj4 library in the following paths:
 If Proj4 is installed in a different location, you must provide its
 installation prefix directory using the `--with-proj-dir` option.
 
+## Upgrading to V4
+
+See the [Upgrading to V4](docs/Upgrading-To-V4.md) docs for information about how to upgrade from RGeo-Proj4 V3 to V4.
+
+For a comprehensive list of changes, see the 4.0.0* release information in the [History](History.md) file.
+
 ## Usage
 
 The `rgeo-proj4` gem can be used by defining `CoordSys::Proj4` objects, as a part of an `RGeo::Geographic.projected_factory`, or as an attribute of other factories.
@@ -75,8 +81,9 @@ require 'rgeo'
 require 'rgeo/proj4'
 
 # define CRS's
-geography = RGeo::CoordSys::Proj4.create("EPSG:4326")
-projection = RGeo::CoordSys::Proj4.create("EPSG:3857")
+# can also be defined with the string "EPSG:XXXX" or a proj string
+geography = RGeo::CoordSys::Proj4.create(4326)
+projection = RGeo::CoordSys::Proj4.create(3857)
 
 x,y = RGeo::CoordSys::Proj4.transform_coords(projection, geography, -8367354.015764384, 4859054.160863457, nil)
 
@@ -111,15 +118,15 @@ The projected factory is a compound geographic factory that is useful for conver
 require 'rgeo'
 require 'rgeo/proj4'
 
-factory = RGeo::Geographic.projected_factory(projection_proj4: "EPSG:3857", projection_srid: 3857)
+factory = RGeo::Geographic.projected_factory(projection_srid: 3857)
 
 p factory.projection_factory
 # => #<RGeo::Geos::CAPIFactory srid=3857 bufres=1 flags=8>
 
-p factory.projection_factory.proj4
+p factory.projection_factory.coord_sys
 # => #<RGeo::CoordSys::Proj4 "+proj=merc +a=6378137 +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null +wktext +no_defs +type=crs">
 
-p factory.projection_factory.proj4.auth_name
+p factory.projection_factory.coord_sys.auth_name
 # => "EPSG:3857"
 
 pt = factory.point(-75.16522, 39.95258299)
@@ -138,12 +145,14 @@ This method allows you to perform projections between more than just a lon/lat s
 require 'rgeo'
 require 'rgeo/proj4'
 
-geography = RGeo::Geos.factory(proj4: "EPSG:4326", srid: 4326)
-projection = RGeo::Geos.factory(proj4: "EPSG:3857", srid: 3857)
+# coord_sys is unnecessary here as just an srid can be used
+# but coord_sys allows both Integer and String crs definitions.
+geography = RGeo::Geos.factory(coord_sys: "EPSG:4326", srid: 4326)
+projection = RGeo::Geos.factory(coord_sys: "EPSG:3857", srid: 3857)
 
-p geography.proj4.auth_name
+p geography.coord_sys.auth_name
 # => "EPSG:4326"
-p projection.proj4.auth_name
+p projection.coord_sys.auth_name
 # => "EPSG:3857"
 
 proj_point = projection.parse_wkt("POINT (-8367354.015764384 4859054.159411294)")
