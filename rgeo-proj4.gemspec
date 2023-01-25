@@ -3,8 +3,8 @@ require_relative "./lib/rgeo/proj4/version"
 Gem::Specification.new do |spec|
   spec.name          = "rgeo-proj4"
   spec.version       = RGeo::Proj4::VERSION
-  spec.authors       = ["Tee Parham, Daniel Azuma"]
-  spec.email         = ["parhameter@gmail.com, dazuma@gmail.com"]
+  spec.authors       = ["Tee Parham, Daniel Azuma, Keith Doggett, Ulysse Buonomo"]
+  spec.email         = ["parhameter@gmail.com, dazuma@gmail.com, kfdoggett@gmail.com"]
 
   spec.summary       = "Proj4 extension for rgeo."
   spec.description   = "Proj4 extension for rgeo."
