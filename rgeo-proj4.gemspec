@@ -15,7 +15,7 @@ Gem::Specification.new do |spec|
   spec.files         = Dir["lib/**/*.rb", "ext/**/*.{rb,c,h}", "LICENSE.txt"]
   spec.extensions    = ["ext/proj4_c_impl/extconf.rb"]
 
-  spec.add_dependency "rgeo", "~> 3.0.0.pre.rc.3"
+  spec.add_dependency "rgeo", "~> 3.0.0"
 
   spec.add_development_dependency "ffi-geos", "~> 2.2"
   spec.add_development_dependency "minitest", "~> 5.14"

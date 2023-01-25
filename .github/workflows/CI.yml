@@ -60,8 +60,6 @@ jobs:
           cd ../../
       - name: Install Proj
         run: |
-          ls proj-${{ matrix.proj }}
-          ls proj-${{ matrix.proj }}/build
           cd proj-${{ matrix.proj }}/build
           cmake ..
           cmake --build .
