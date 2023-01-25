@@ -12,7 +12,18 @@ else
 
   require "mkmf"
 
-  header_dirs_ =
+  if ENV.key?("DEBUG") || ENV.key?("MAINTAINER_MODE")
+    $CFLAGS << " -DDEBUG" \
+               " -Wall" \
+               " -ggdb" \
+               " -pedantic" \
+               " -std=c17"
+
+    extra_flags = ENV.fetch("MAINTAINER_MODE", ENV.fetch("DEBUG", ""))
+    $CFLAGS << " " << extra_flags if extra_flags.strip.start_with?("-")
+  end
+
+  header_dirs =
     [
       ::RbConfig::CONFIG["includedir"],
       "/usr/local/include",
@@ -26,7 +37,7 @@ else
       "/Library/Frameworks/PROJ.framework/unix/include",
       "/usr/include"
     ]
-  lib_dirs_ =
+  lib_dirs =
     [
       ::RbConfig::CONFIG["libdir"],
       "/usr/local/lib",
@@ -42,28 +53,65 @@ else
       "/usr/lib",
       "/usr/lib64"
     ]
-  header_dirs_.delete_if { |path_| !::File.directory?(path_) }
-  lib_dirs_.delete_if { |path_| !::File.directory?(path_) }
+  header_dirs.delete_if { |path| !::File.directory?(path) }
+  lib_dirs.delete_if { |path| !::File.directory?(path) }
 
-  found_proj_ = false
-  header_dirs_, lib_dirs_ = dir_config("proj", header_dirs_, lib_dirs_)
+  found_proj = false
+  found_valid_proj_version = false
+  header_dirs, lib_dirs = dir_config("proj", header_dirs, lib_dirs)
   if have_header("proj.h")
     $libs << " -lproj"
+    found_proj = true
 
-    if have_func("proj_create", "proj.h")
-      found_proj_ = true
-      have_func("proj_create_crs_to_crs_from_pj", "proj.h")
-      have_func("proj_normalize_for_visualization", "proj.h")
-    else
-      $libs.gsub!(" -lproj", "")
+    required_proj_funcs = %w[
+      proj_create
+      proj_create_crs_to_crs_from_pj
+      proj_normalize_for_visualization
+    ]
+    found_valid_proj_version = required_proj_funcs.all? do |func|
+      have_func(func, "proj.h")
     end
   end
   have_func("rb_gc_mark_movable")
 
-  unless found_proj_
-    puts "**** WARNING: Unable to find Proj headers or Proj version is too old."
-    puts "**** Compiling without Proj support."
-  end
-  create_makefile("rgeo/coord_sys/proj4_c_impl")
+  unless found_proj
 
+    install_text = case RUBY_PLATFORM
+                   when /linux/
+                     %(
+  Please install proj like so:
+    apt-get install libproj-dev proj-bin
+                     )
+                   when /darwin/
+                     %(
+  Please install proj like so:
+    brew install proj
+                     )
+                   else
+                     %(
+  Please install proj.
+                     )
+                   end
+    error_msg = %(
+**** WARNING: Unable to find Proj headers. Ensure that Proj is properly installed.
+
+#{install_text}
+
+or set the path manually using:
+ --with-proj-dir or with the --with-proj-include and --with-proj-lib options
+    )
+    warn error_msg
+    raise
+  end
+
+  unless found_valid_proj_version
+    error_msg = %(
+**** WARNING: The found Proj version is not new enough to be used for this version of rgeo-proj4.
+**** Proj 6.2+ is required.
+    )
+    warn error_msg
+    raise
+  end
+
+  create_makefile("rgeo/coord_sys/proj4_c_impl")
 end

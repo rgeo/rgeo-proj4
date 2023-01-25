@@ -186,9 +186,9 @@ module RGeo
 
         def test_is_empty
           geom1 = @factory.collection([@point1, @line1])
-          assert(!geom1.is_empty?)
+          assert(!geom1.empty?)
           geom2 = @factory.collection([])
-          assert(geom2.is_empty?)
+          assert(geom2.empty?)
         end
 
         def test_empty_collection_envelope
@@ -199,8 +199,10 @@ module RGeo
         end
 
         def test_empty_collection_boundary
-          empty = @factory.collection([])
-          assert_nil(empty.boundary)
+          assert_raises(RGeo::Error::InvalidGeometry) do
+            empty = @factory.collection([])
+            empty.boundary
+          end
         end
 
         def test_each_block

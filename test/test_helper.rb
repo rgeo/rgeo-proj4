@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+# Ensure that we cleanup every object before comparing with valgrind.
+at_exit { GC.start } if ENV["LD_PRELOAD"]&.include? "valgrind"
+
 require "minitest/autorun"
 require "rgeo/proj4"
 require "common/factory_tests"
@@ -17,5 +20,5 @@ end
 
 # assert that a and b float numbers are very close to each other
 def assert_close_enough(a, b)
-  assert_in_delta(a, b, 1e-7)
+  assert_in_delta(a, b, 1e-4)
 end

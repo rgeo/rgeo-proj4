@@ -6,25 +6,49 @@ module RGeo
     # This is a Ruby wrapper around a proj crs_to_crs
     # A crs_to_crs transformation object is a pipeline between two known coordinate reference systems.
     # https://proj.org/development/reference/functions.html#c.proj_create_crs_to_crs
-    class CRSToCRS
-      attr_writer :from, :to
+    #
+    # It also inherits from the RGeo::CoordSys::CoordinateTransform abstract class.
+    class CRSToCRS < CS::CoordinateTransform
+      attr_accessor :source_cs, :target_cs
 
       class << self
         def create(from, to)
           crs_to_crs = _create(from, to)
-          crs_to_crs.from = from
-          crs_to_crs.to = to
+          crs_to_crs.source_cs = from
+          crs_to_crs.target_cs = to
           crs_to_crs
         end
       end
+
+      alias from source_cs
+      alias to target_cs
+      alias to_wkt _as_text
+
+      def wkt_typename
+        wkt_str = to_wkt
+        wkt_str[0, wkt_str.index("[")]
+      end
+
+      def transform_type
+        PROJ_TYPES[_proj_type]
+      end
+
+      def area_of_use
+        _area_of_use
+      end
+
+      def identity?
+        _identity?(source_cs, target_cs)
+      end
+
       # transform the coordinates from the initial CRS to the destination CRS
       def transform_coords(x, y, z)
-        if @from._radians? && @from._geographic?
+        if from._radians? && from._geographic?
           x *= ImplHelper::Math::DEGREES_PER_RADIAN
           y *= ImplHelper::Math::DEGREES_PER_RADIAN
         end
         result = _transform_coords(x, y, z)
-        if result && @to._radians? && @to._geographic?
+        if result && to._radians? && to._geographic?
           result[0] *= ImplHelper::Math::RADIANS_PER_DEGREE
           result[1] *= ImplHelper::Math::RADIANS_PER_DEGREE
         end
@@ -78,6 +102,10 @@ module RGeo
         ext_ = transform_linear_ring(from_polygon_.exterior_ring, to_factory_)
         int_ = from_polygon_.interior_rings.map { |r_| transform_linear_ring(r_, to_factory_) }
         to_factory_.polygon(ext_, int_)
+      end
+
+      def inspect
+        "#<#{self.class}:0x#{object_id.to_s(16)} @source_cs=#{source_cs.original_str} @target_cs=#{target_cs.original_str}>"
       end
     end
 

@@ -19,7 +19,9 @@ module RGeo
     # option. You may also use this object directly to perform low-level
     # coordinate transformations.
 
-    class Proj4
+    class Proj4 < CS::CoordinateSystem
+      attr_accessor :dimension
+
       def inspect # :nodoc:
         "#<#{self.class}:0x#{object_id.to_s(16)} #{canonical_str.inspect}>"
       end
@@ -110,6 +112,7 @@ module RGeo
       def as_text
         _as_text
       end
+      alias to_wkt as_text
 
       # Returns the string representing the authority and code of the
       # CRS if it exists, nil otherwise.
@@ -118,6 +121,18 @@ module RGeo
 
       def auth_name
         _auth_name
+      end
+
+      # Gets axis details for dimension within coordinate system. Each
+      # dimension in the coordinate system has a corresponding axis.
+      def get_axis(dimension)
+        _axis_and_unit_info(dimension).split(":")[0]
+      end
+
+      # Gets units for dimension within coordinate system. Each
+      # dimension in the coordinate system has corresponding units.
+      def get_units(dimension)
+        _axis_and_unit_info(dimension).split(":")[1]
       end
 
       # Returns true if this Proj4 object is a geographic (lat-long)
@@ -134,6 +149,13 @@ module RGeo
         _geocentric?
       end
 
+      # Returns true if this Proj4 object is a projected
+      # coordinate system
+
+      def projected?
+        _projected?
+      end
+
       # Returns true if this Proj4 object uses radians rather than degrees
       # if it is a geographic coordinate system.
 
@@ -147,6 +169,39 @@ module RGeo
 
       def get_geographic
         _get_geographic
+      end
+      alias geographic_coordinate_system get_geographic
+
+      # Returns true if this Proj4 object represents a CRS.
+
+      def crs?
+        _crs?
+      end
+
+      # Sometimes used to assign SRIDs in factory creation
+      # Also in the base CS::Info class that CS::CoordinateSystem
+      # inherits from
+      #
+      # @return [Integer|NilClass] authority code if available
+      def authority_code
+        auth_name.split(":")[1].to_i if auth_name
+      end
+
+      # Low-level coordinate transform method.
+      # Transforms the given coordinate (x, y, [z]) from one proj4
+      # coordinate system to another. Returns an array with either two
+      # or three elements.
+      def transform_coords(to_proj, x, y, z = nil)
+        self.class.transform_coords(self, to_proj, x, y, z)
+      end
+
+      # Low-level geometry transform method.
+      # Transforms the given geometry between the given two projections.
+      # The resulting geometry is constructed using the to_factory.
+      # Any projections associated with the factories themselves are
+      # ignored.
+      def transform(from_geometry, to_proj, to_factory)
+        self.class.transform(self, from_geometry, to_proj, to_factory)
       end
 
       class << self
@@ -165,8 +220,9 @@ module RGeo
         end
 
         # Create a new Proj4 object, given a definition, which may be
-        # either a string or a hash. Returns nil if the given definition
-        # is invalid or Proj4 is not supported.
+        # either a string, hash, or integer. If an integer is given, it
+        # assumes that you are using the EPSG SRID that matches that code.
+        # Returns nil if the given definition is invalid or Proj4 is not supported.
         #
         # Recognized options include:
         #
@@ -188,11 +244,16 @@ module RGeo
               defn_ = defn_.map { |k_, v_| v_ ? "+#{k_}=#{v_}" : "+#{k_}" }.join(" ")
             end
 
+            defn_ = "EPSG:#{defn_}" if defn_.is_a?(Integer)
+
             result_ = _create(defn_, opts_[:radians])
-            result_ = nil unless result_._valid?
+            raise RGeo::Error::InvalidProjection unless result_._valid?
+
+            result_.dimension = result_._axis_count
           end
           result_
         end
+        alias create_from_wkt create
 
         # Create a new Proj4 object, given a definition, which may be
         # either a string or a hash. Raises Error::UnsupportedOperation
@@ -221,9 +282,9 @@ module RGeo
         # Transforms the given coordinate (x, y, [z]) from one proj4
         # coordinate system to another. Returns an array with either two
         # or three elements.
-        def transform_coords(from_proj_, to_proj_, x_, y_, z_ = nil)
-          crs_to_crs = CRSStore.get(from_proj_, to_proj_)
-          crs_to_crs.transform_coords(x_, y_, z_)
+        def transform_coords(from_proj, to_proj, x, y, z = nil)
+          crs_to_crs = CRSStore.get(from_proj, to_proj)
+          crs_to_crs.transform_coords(x, y, z)
         end
 
         # Low-level geometry transform method.
@@ -231,9 +292,9 @@ module RGeo
         # The resulting geometry is constructed using the to_factory.
         # Any projections associated with the factories themselves are
         # ignored.
-        def transform(from_proj_, from_geometry_, to_proj_, to_factory_)
-          crs_to_crs = CRSStore.get(from_proj_, to_proj_)
-          crs_to_crs.transform(from_geometry_, to_factory_)
+        def transform(from_proj, from_geometry, to_proj, to_factory)
+          crs_to_crs = CRSStore.get(from_proj, to_proj)
+          crs_to_crs.transform(from_geometry, to_factory)
         end
       end
     end

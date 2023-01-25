@@ -8,11 +8,46 @@ class TestProj4 < Minitest::Test # :nodoc:
     # assert_match(/^\d+\.\d+(\.\d+)?$/, RGeo::CoordSys::Proj4.version)
   end
 
+  def test_inheritance
+    proj = RGeo::CoordSys::Proj4.create("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +type=crs")
+    assert(proj.is_a?(RGeo::CoordSys::Proj4))
+    assert(proj.is_a?(RGeo::CoordSys::CS::CoordinateSystem))
+  end
+
   def test_create_wgs84
     proj = RGeo::CoordSys::Proj4.create("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +type=crs")
     assert_equal(true, proj.geographic?)
     assert_equal("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +type=crs", proj.original_str)
     assert_equal("+proj=longlat +datum=WGS84 +no_defs +type=crs", proj.canonical_str)
+  end
+
+  def test_create_epsg_code
+    proj = RGeo::CoordSys::Proj4.create(4326)
+    assert_equal(true, proj.geographic?)
+    assert_equal("EPSG:4326", proj.auth_name)
+  end
+
+  def test_valid
+    assert_raises(RGeo::Error::InvalidProjection) do
+      RGeo::CoordSys::Proj4.create("")
+    end
+
+    # will not raise for a valid projection, even though it is not a CRS
+    proj = RGeo::CoordSys::Proj4.create("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+    assert(proj._valid?)
+  end
+
+  def test_dimension_assigned_on_create
+    proj = RGeo::CoordSys::Proj4.create("EPSG:3857")
+    assert_equal(2, proj.dimension)
+  end
+
+  def test_is_crs
+    crs_proj = RGeo::CoordSys::Proj4.create("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +type=crs")
+    non_crs_proj = RGeo::CoordSys::Proj4.create("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+
+    assert(crs_proj.crs?)
+    refute(non_crs_proj.crs?)
   end
 
   def test_as_text
@@ -34,6 +69,24 @@ class TestProj4 < Minitest::Test # :nodoc:
     assert_nil(proj.auth_name)
   end
 
+  def test_authority_code
+    proj = RGeo::CoordSys::Proj4.create("EPSG:4326")
+    assert_equal(4326, proj.authority_code)
+
+    proj = RGeo::CoordSys::Proj4.create("+proj=longlat +ellps=WGS84 +datum=WGS84 +lat_ts=5.0 +no_defs +type=crs")
+    assert_nil(proj.authority_code)
+  end
+
+  def test_get_axis
+    proj = RGeo::CoordSys::Proj4.create("EPSG:3857")
+    assert_equal("Easting", proj.get_axis(0))
+  end
+
+  def test_get_units
+    proj = RGeo::CoordSys::Proj4.create("EPSG:3857")
+    assert_equal("metre", proj.get_units(0))
+  end
+
   def test_get_wgs84_geographic
     proj = RGeo::CoordSys::Proj4.create("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +type=crs")
     proj2 = proj.get_geographic
@@ -41,6 +94,11 @@ class TestProj4 < Minitest::Test # :nodoc:
     assert_equal(true, proj2.geographic?)
     coords = RGeo::CoordSys::Proj4.transform_coords(proj, proj2, 1, 2, 0)
     assert_equal([1, 2, 0], coords)
+  end
+
+  def test_projected
+    proj = RGeo::CoordSys::Proj4.create("EPSG:3857")
+    assert(proj.projected?)
   end
 
   def test_identity_transform
@@ -74,8 +132,8 @@ class TestProj4 < Minitest::Test # :nodoc:
   end
 
   def test_point_projection_cast
-    geography = RGeo::Geos.factory(proj4: "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +type=crs", srid: 4326)
-    projection = RGeo::Geos.factory(proj4: "+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.9996012717 +x_0=400000 +y_0=-100000 +ellps=airy +datum=OSGB36 +units=m +no_defs +type=crs", srid: 27_700)
+    geography = RGeo::Geos.factory(coord_sys: "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +type=crs", srid: 4326)
+    projection = RGeo::Geos.factory(coord_sys: "+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.9996012717 +x_0=400000 +y_0=-100000 +ellps=airy +datum=OSGB36 +units=m +no_defs +type=crs", srid: 27_700)
     proj_point = projection.parse_wkt("POINT(473600.5000000000000000 186659.7999999999883585)")
     geo_point = RGeo::Feature.cast(proj_point, project: true, factory: geography)
     assert_close_enough(-0.9393598527244420, geo_point.x)
@@ -83,10 +141,10 @@ class TestProj4 < Minitest::Test # :nodoc:
   end
 
   def test_point_transform_lowlevel
-    geography = RGeo::Geos.factory(proj4: "EPSG:4326", srid: 4326)
-    projection = RGeo::Geos.factory(proj4: "EPSG:27700", srid: 27_700)
+    geography = RGeo::Geos.factory(coord_sys: "EPSG:4326", srid: 4326)
+    projection = RGeo::Geos.factory(coord_sys: "EPSG:27700", srid: 27_700)
     proj_point = projection.parse_wkt("POINT(473600.5000000000000000 186659.7999999999883585)")
-    geo_point = RGeo::CoordSys::Proj4.transform(projection.proj4, proj_point, geography.proj4, geography)
+    geo_point = RGeo::CoordSys::Proj4.transform(projection.coord_sys, proj_point, geography.coord_sys, geography)
     assert_close_enough(-0.9393598527244420, geo_point.x)
     assert_close_enough(51.5740106527552697, geo_point.y)
   end
@@ -101,6 +159,13 @@ class TestProj4 < Minitest::Test # :nodoc:
     geographic = projection.get_geographic
     expected = RGeo::CoordSys::Proj4.create("+proj=longlat +datum=WGS84 +no_defs +type=crs")
     assert_equal(expected, geographic)
+  end
+
+  def test_get_geographic_invalid_crs
+    projection = RGeo::CoordSys::Proj4.create("+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs")
+    assert_raises(RGeo::Error::InvalidProjection) do
+      projection.get_geographic
+    end
   end
 
   def test_marshal_roundtrip
@@ -141,11 +206,11 @@ class TestProj4 < Minitest::Test # :nodoc:
 
     from_def = "+proj=lcc +lat_1=49 +lat_2=44 +lat_0=46.5 +lon_0=3 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs"
     from_proj = RGeo::CoordSys::Proj4.create(from_def)
-    from_factory = RGeo::Cartesian.factory(srid: 2154, proj4: from_proj)
+    from_factory = RGeo::Cartesian.factory(srid: 2154, coord_sys: from_proj)
 
     to_def = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +type=crs"
     to_proj = RGeo::CoordSys::Proj4.create(to_def)
-    to_factory = RGeo::Cartesian.factory(srid: 4326, proj4: to_proj)
+    to_factory = RGeo::Cartesian.factory(srid: 4326, coord_sys: to_proj)
 
     from_geom = from_factory.parse_wkt(from_wkt)
     to_geom = RGeo::CoordSys::Proj4.transform(from_proj, from_geom, to_proj, to_factory)
