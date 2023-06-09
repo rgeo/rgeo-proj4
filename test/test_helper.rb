@@ -5,7 +5,7 @@ at_exit { GC.start } if ENV["LD_PRELOAD"]&.include? "valgrind"
 
 require "minitest/autorun"
 require "rgeo/proj4"
-require "common/factory_tests"
+require_relative "common/factory_tests"
 require "psych"
 
 # Only here for Psych 4.0.0 breaking change.

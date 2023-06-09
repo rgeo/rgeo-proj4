@@ -32,6 +32,10 @@ typedef struct {
   PJ *crs_to_crs;
 } RGeo_CRSToCRSData;
 
+// PROJ context for multithreaded environments. This avoids segfaults or
+// hanging processes on fork. We only use one context, initialized on load.
+static PJ_CONTEXT *local_proj_context;
+
 // Destroy function for proj data.
 static void rgeo_proj4_free(void *ptr) {
   RGeo_Proj4Data *data = (RGeo_Proj4Data *)ptr;
@@ -153,11 +157,12 @@ static VALUE method_proj4_initialize_copy(VALUE self, VALUE orig) {
   // Copy value from orig
   TypedData_Get_Struct(orig, RGeo_Proj4Data, &rgeo_proj4_data_type, orig_data);
   if (!NIL_P(orig_data->original_str)) {
-    self_data->pj =
-        proj_create(PJ_DEFAULT_CTX, StringValuePtr(orig_data->original_str));
+    self_data->pj = proj_create(local_proj_context,
+                                StringValuePtr(orig_data->original_str));
   } else {
-    str = proj_as_proj_string(PJ_DEFAULT_CTX, orig_data->pj, PJ_PROJ_4, NULL);
-    self_data->pj = proj_create(PJ_DEFAULT_CTX, str);
+    str =
+        proj_as_proj_string(local_proj_context, orig_data->pj, PJ_PROJ_4, NULL);
+    self_data->pj = proj_create(local_proj_context, str);
   }
   self_data->original_str = orig_data->original_str;
   self_data->uses_radians = orig_data->uses_radians;
@@ -175,7 +180,7 @@ static VALUE method_proj4_set_value(VALUE self, VALUE str, VALUE uses_radians) {
   rgeo_proj4_clear_struct(self_data);
 
   // Set new data
-  self_data->pj = proj_create(PJ_DEFAULT_CTX, StringValuePtr(str));
+  self_data->pj = proj_create(local_proj_context, StringValuePtr(str));
   self_data->original_str = str;
   self_data->uses_radians = RTEST(uses_radians) ? 1 : 0;
 
@@ -194,7 +199,8 @@ static VALUE method_proj4_get_geographic(VALUE self) {
     TypedData_Get_Struct(self, RGeo_Proj4Data, &rgeo_proj4_data_type,
                          self_data);
 
-    geographic_proj = proj_crs_get_geodetic_crs(PJ_DEFAULT_CTX, self_data->pj);
+    geographic_proj =
+        proj_crs_get_geodetic_crs(local_proj_context, self_data->pj);
     if (geographic_proj == 0) {
       FREE(new_data);
       rb_raise(rb_eRGeoInvalidProjectionError,
@@ -233,7 +239,7 @@ static VALUE method_proj4_canonical_str(VALUE self) {
   TypedData_Get_Struct(self, RGeo_Proj4Data, &rgeo_proj4_data_type, data);
   pj = data->pj;
   if (pj) {
-    str = proj_as_proj_string(PJ_DEFAULT_CTX, pj, PJ_PROJ_4, NULL);
+    str = proj_as_proj_string(local_proj_context, pj, PJ_PROJ_4, NULL);
     if (str) {
       result = rb_str_new2(str);
     }
@@ -252,7 +258,7 @@ static VALUE method_proj4_wkt_str(VALUE self) {
   pj = data->pj;
   if (pj) {
     const char *const options[] = {"MULTILINE=NO", NULL};
-    str = proj_as_wkt(PJ_DEFAULT_CTX, pj, WKT_TYPE, options);
+    str = proj_as_wkt(local_proj_context, pj, WKT_TYPE, options);
     if (str) {
       result = rb_str_new2(str);
     }
@@ -297,9 +303,9 @@ static VALUE method_proj4_axis_and_unit_info_str(VALUE self, VALUE dimension) {
   TypedData_Get_Struct(self, RGeo_Proj4Data, &rgeo_proj4_data_type, data);
   pj = data->pj;
   if (pj) {
-    pj_cs = proj_crs_get_coordinate_system(PJ_DEFAULT_CTX, pj);
+    pj_cs = proj_crs_get_coordinate_system(local_proj_context, pj);
     if (pj_cs) {
-      if (proj_cs_get_axis_info(PJ_DEFAULT_CTX, pj_cs, dimension_index,
+      if (proj_cs_get_axis_info(local_proj_context, pj_cs, dimension_index,
                                 &axis_info, NULL, NULL, NULL, &unit_name, NULL,
                                 NULL)) {
         result = rb_sprintf("%s:%s", axis_info, unit_name);
@@ -322,9 +328,9 @@ static VALUE method_proj4_axis_count(VALUE self) {
   TypedData_Get_Struct(self, RGeo_Proj4Data, &rgeo_proj4_data_type, data);
   pj = data->pj;
   if (pj) {
-    pj_cs = proj_crs_get_coordinate_system(PJ_DEFAULT_CTX, pj);
+    pj_cs = proj_crs_get_coordinate_system(local_proj_context, pj);
     if (pj_cs) {
-      count = proj_cs_get_axis_count(PJ_DEFAULT_CTX, pj_cs);
+      count = proj_cs_get_axis_count(local_proj_context, pj_cs);
       result = INT2FIX(count);
 
       proj_destroy(pj_cs);
@@ -412,7 +418,7 @@ static VALUE cmethod_proj4_create(VALUE klass, VALUE str, VALUE uses_radians) {
   Check_Type(str, T_STRING);
   data = ALLOC(RGeo_Proj4Data);
   if (data) {
-    data->pj = proj_create(PJ_DEFAULT_CTX, StringValuePtr(str));
+    data->pj = proj_create(local_proj_context, StringValuePtr(str));
     data->original_str = str;
     data->uses_radians = RTEST(uses_radians) ? 1 : 0;
     result = TypedData_Wrap_Struct(klass, &rgeo_proj4_data_type, data);
@@ -435,8 +441,8 @@ static VALUE cmethod_crs_to_crs_create(VALUE klass, VALUE from, VALUE to) {
   TypedData_Get_Struct(to, RGeo_Proj4Data, &rgeo_proj4_data_type, to_data);
   from_pj = from_data->pj;
   to_pj = to_data->pj;
-  crs_to_crs =
-      proj_create_crs_to_crs_from_pj(PJ_DEFAULT_CTX, from_pj, to_pj, 0, NULL);
+  crs_to_crs = proj_create_crs_to_crs_from_pj(local_proj_context, from_pj,
+                                              to_pj, 0, NULL);
 
   // check for invalid transformation
   if (crs_to_crs == 0) {
@@ -447,7 +453,7 @@ static VALUE cmethod_crs_to_crs_create(VALUE klass, VALUE from, VALUE to) {
   // necessary to use proj_normalize_for_visualization so that we
   // do not have to worry about the order of coordinates in every
   // coord system
-  gis_pj = proj_normalize_for_visualization(PJ_DEFAULT_CTX, crs_to_crs);
+  gis_pj = proj_normalize_for_visualization(local_proj_context, crs_to_crs);
   if (gis_pj) {
     proj_destroy(crs_to_crs);
     crs_to_crs = gis_pj;
@@ -503,7 +509,7 @@ static VALUE method_crs_to_crs_wkt_str(VALUE self) {
   crs_to_crs_pj = crs_to_crs_data->crs_to_crs;
   if (crs_to_crs_pj) {
     const char *const options[] = {"MULTILINE=NO", NULL};
-    str = proj_as_wkt(PJ_DEFAULT_CTX, crs_to_crs_pj, WKT_TYPE, options);
+    str = proj_as_wkt(local_proj_context, crs_to_crs_pj, WKT_TYPE, options);
     if (str) {
       result = rb_str_new2(str);
     }
@@ -522,8 +528,8 @@ static VALUE method_crs_to_crs_area_of_use_str(VALUE self) {
                        crs_to_crs_data);
   crs_to_crs_pj = crs_to_crs_data->crs_to_crs;
   if (crs_to_crs_pj) {
-    if (proj_get_area_of_use(PJ_DEFAULT_CTX, crs_to_crs_pj, NULL, NULL, NULL,
-                             NULL, &str)) {
+    if (proj_get_area_of_use(local_proj_context, crs_to_crs_pj, NULL, NULL,
+                             NULL, NULL, &str)) {
       result = rb_str_new2(str);
     }
   }
@@ -639,6 +645,7 @@ static void rgeo_init_proj4() {
 
 void Init_proj4_c_impl() {
 #ifdef RGEO_PROJ4_SUPPORTED
+  local_proj_context = proj_context_create();
   rgeo_init_proj4();
   rgeo_init_proj_errors();
 #endif
