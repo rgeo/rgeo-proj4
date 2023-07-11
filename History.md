@@ -1,3 +1,8 @@
+### Ongoing
+
+**Bug Fixes**
+* Avoid a segfault when forking (`Process.fork`). #40
+
 ### 4.0.0 / 2023-01-25
 
 **Minor Changes**
