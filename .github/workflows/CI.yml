@@ -43,7 +43,7 @@ jobs:
       - name: Install Packages (Mac)
         if: matrix.os == 'macos'
         run: brew install geos cmake
-      - uses: actions/cache@v2
+      - uses: actions/cache@v4
         id: proj-cache
         with:
           path: ./proj-${{ matrix.proj }}
