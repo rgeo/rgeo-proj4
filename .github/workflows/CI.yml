@@ -14,14 +14,20 @@ jobs:
         ruby:
           - head
           - "4.0"
+          - "3.4"
+          - "3.3"
+          - "3.2"
           - "3.1"
-          - "3.0"
-          - "2.7"
-          - "2.6"
         os:
           - ubuntu
           - macos
         proj:
+          - "9.7.1"
+          - "9.6.2"
+          - "9.5.1"
+          - "9.4.1"
+          - "9.3.1"
+          - "9.2.1"
           - "9.1.0"
           - "9.0.1"
           - "8.2.1"
@@ -40,10 +46,15 @@ jobs:
         if: matrix.os == 'ubuntu'
         run: |
           sudo add-apt-repository ppa:ubuntugis/ubuntugis-unstable
-          sudo apt-get install curl libcurl4-openssl-dev libssl-dev libgeos-dev cmake
+          sudo apt-get install curl libcurl4-openssl-dev libssl-dev libgeos-dev cmake libtiff-dev
+          echo "CC=gcc-12" >> $GITHUB_ENV
+          echo "CXX=g++-12" >> $GITHUB_ENV
       - name: Install Packages (Mac)
         if: matrix.os == 'macos'
-        run: brew install geos cmake
+        run: |
+          brew install geos cmake
+
+          echo DYLD_LIBRARY_PATH=/usr/local/lib:$DYLD_LIBRARY_PATH >> $GITHUB_ENV
       - uses: actions/cache@v5
         id: proj-cache
         with:
@@ -56,13 +67,13 @@ jobs:
           cd proj-${{ matrix.proj }}
           mkdir build
           cd build
-          cmake ..
+          cmake -DBUILD_TESTING=OFF -DPROJ_TESTS=OFF -DCMAKE_POLICY_VERSION_MINIMUM=3.5 ..
           cmake --build .
           cd ../../
       - name: Install Proj
         run: |
           cd proj-${{ matrix.proj }}/build
-          cmake ..
+          cmake -DBUILD_TESTING=OFF -DPROJ_TESTS=OFF -DCMAKE_POLICY_VERSION_MINIMUM=3.5 ..
           cmake --build .
           sudo cmake --build . --target install
           cd ../../
