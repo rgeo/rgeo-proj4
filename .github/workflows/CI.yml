@@ -12,15 +12,9 @@ jobs:
       fail-fast: false
       matrix:
         ruby:
-          - head
           - "4.0"
-          - "3.4"
-          - "3.3"
-          - "3.2"
-          - "3.1"
         os:
           - ubuntu
-          - macos
         proj:
           - "9.7.1"
           - "9.6.2"
@@ -38,6 +32,25 @@ jobs:
           - "7.0.1"
           - "6.3.1"
           - "6.2.1"
+        include:
+          - os: ubuntu
+            ruby: head
+            proj: "9.7.1"
+          - os: ubuntu
+            ruby: "3.4"
+            proj: "9.7.1"
+          - os: ubuntu
+            ruby: "3.3"
+            proj: "9.7.1"
+          - os: ubuntu
+            ruby: "3.2"
+            proj: "9.7.1"
+          - os: ubuntu
+            ruby: "3.1"
+            proj: "9.7.1"
+          - os: macos
+            ruby: "4.0"
+            proj: "9.7.1"
     runs-on: ${{ matrix.os }}-latest
     name: Ruby ${{ matrix.ruby }}, Proj-${{ matrix.proj }} (${{ matrix.os }})
     steps:
