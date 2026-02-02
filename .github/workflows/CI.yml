@@ -30,8 +30,6 @@ jobs:
           - "7.2.1"
           - "7.1.1"
           - "7.0.1"
-          - "6.3.1"
-          - "6.2.1"
         include:
           - os: ubuntu
             ruby: head
@@ -59,7 +57,7 @@ jobs:
         if: matrix.os == 'ubuntu'
         run: |
           sudo add-apt-repository ppa:ubuntugis/ubuntugis-unstable
-          sudo apt-get install curl libcurl4-openssl-dev libssl-dev libgeos-dev cmake libtiff-dev
+          sudo apt-get install -yqq curl libcurl4-openssl-dev libssl-dev libgeos-dev cmake libtiff-dev
           echo "CC=gcc-12" >> $GITHUB_ENV
           echo "CXX=g++-12" >> $GITHUB_ENV
       - name: Install Packages (Mac)
@@ -86,7 +84,7 @@ jobs:
       - name: Install Proj
         run: |
           cd proj-${{ matrix.proj }}/build
-          cmake -DBUILD_TESTING=OFF -DPROJ_TESTS=OFF -DCMAKE_POLICY_VERSION_MINIMUM=3.5 ..
+          cmake -DBUILD_TESTING=OFF -DCMAKE_POLICY_VERSION_MINIMUM=3.5 ..
           cmake --build .
           sudo cmake --build . --target install
           cd ../../
