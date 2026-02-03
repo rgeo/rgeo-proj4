@@ -4,10 +4,7 @@
 * Minimum required Ruby version is now 3.1. #44
 
 *** Minor Changes
-* Update RGeo to 3.1.0. #44
-* Add Ruby 4.0 to CI. #44
-* Remove Proj < 7 from CI. #44
-* Only test MacOS against latest Proj and stable Ruby. #44
+* Add support for ruby 4.0 #44
 
 **Bug Fixes**
 * Avoid a segfault when forking (`Process.fork`). #40
