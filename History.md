@@ -1,5 +1,11 @@
 ### Ongoing
 
+*** Breaking Changes**
+* Minimum required Ruby version is now 3.1. #44
+
+*** Minor Changes
+* Add support for ruby 4.0 #44
+
 **Bug Fixes**
 * Avoid a segfault when forking (`Process.fork`). #40
 

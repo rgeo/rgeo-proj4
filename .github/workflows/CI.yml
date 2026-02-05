@@ -12,15 +12,16 @@ jobs:
       fail-fast: false
       matrix:
         ruby:
-          - head
-          - "3.1"
-          - "3.0"
-          - "2.7"
-          - "2.6"
+          - "4.0"
         os:
           - ubuntu
-          - macos
         proj:
+          - "9.7.1"
+          - "9.6.2"
+          - "9.5.1"
+          - "9.4.1"
+          - "9.3.1"
+          - "9.2.1"
           - "9.1.0"
           - "9.0.1"
           - "8.2.1"
@@ -29,21 +30,43 @@ jobs:
           - "7.2.1"
           - "7.1.1"
           - "7.0.1"
-          - "6.3.1"
-          - "6.2.1"
+        include:
+          - os: ubuntu
+            ruby: head
+            proj: "9.7.1"
+          - os: ubuntu
+            ruby: "3.4"
+            proj: "9.7.1"
+          - os: ubuntu
+            ruby: "3.3"
+            proj: "9.7.1"
+          - os: ubuntu
+            ruby: "3.2"
+            proj: "9.7.1"
+          - os: ubuntu
+            ruby: "3.1"
+            proj: "9.7.1"
+          - os: macos
+            ruby: "4.0"
+            proj: "9.7.1"
     runs-on: ${{ matrix.os }}-latest
     name: Ruby ${{ matrix.ruby }}, Proj-${{ matrix.proj }} (${{ matrix.os }})
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v6
       - name: Install Packages (Linux)
         if: matrix.os == 'ubuntu'
         run: |
           sudo add-apt-repository ppa:ubuntugis/ubuntugis-unstable
-          sudo apt-get install curl libcurl4-openssl-dev libssl-dev libgeos-dev cmake
+          sudo apt-get install -yqq curl libcurl4-openssl-dev libssl-dev libgeos-dev cmake libtiff-dev
+          echo "CC=gcc-12" >> $GITHUB_ENV
+          echo "CXX=g++-12" >> $GITHUB_ENV
       - name: Install Packages (Mac)
         if: matrix.os == 'macos'
-        run: brew install geos cmake
-      - uses: actions/cache@v2
+        run: |
+          brew install geos cmake
+
+          echo DYLD_LIBRARY_PATH=/usr/local/lib:$DYLD_LIBRARY_PATH >> $GITHUB_ENV
+      - uses: actions/cache@v5
         id: proj-cache
         with:
           path: ./proj-${{ matrix.proj }}
@@ -55,13 +78,13 @@ jobs:
           cd proj-${{ matrix.proj }}
           mkdir build
           cd build
-          cmake ..
+          cmake -DBUILD_TESTING=OFF -DCMAKE_POLICY_VERSION_MINIMUM=3.5 ..
           cmake --build .
           cd ../../
       - name: Install Proj
         run: |
           cd proj-${{ matrix.proj }}/build
-          cmake ..
+          cmake -DBUILD_TESTING=OFF -DCMAKE_POLICY_VERSION_MINIMUM=3.5 ..
           cmake --build .
           sudo cmake --build . --target install
           cd ../../
@@ -80,10 +103,10 @@ jobs:
   Memcheck:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v6
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: "3.1"
+          ruby-version: "4.0"
           bundler-cache: true
       - name: Install dependencies
         run: |
@@ -94,10 +117,10 @@ jobs:
   RuboCop:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v6
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: "3.1"
+          ruby-version: "4.0"
           bundler-cache: true
       - run: |
           bundle exec rubocop --color --parallel
@@ -107,7 +130,7 @@ jobs:
     #   outdated clang-format package.
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v6
       - name: Install clang-format
         run: sudo apt-get install -yqq clang-format
       - name: Show version
