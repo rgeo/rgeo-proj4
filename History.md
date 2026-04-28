@@ -1,5 +1,7 @@
 ### Ongoing
 
+### 5.0.0 / 2026-04-28
+
 *** Breaking Changes**
 * Minimum required Ruby version is now 3.1. #44
 
